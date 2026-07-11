@@ -1,0 +1,376 @@
+[
+  {
+    "title": "Walter",
+    "type": "audio",
+    "src": "media/Walter.mp3",
+    "thumbnail": "thumbnails/walter.jpg",
+    "moods": [
+      "Wonder",
+      "Comedy"
+    ],
+    "settings": [
+      "Fantasy"
+    ],
+    "mediums": [
+      "Animation"
+    ],
+    "instrumentation": [
+      "Orchestral"
+    ],
+    "description": "A whimsical orchestral piece with a playful character."
+  },
+  {
+    "title": "Dawn",
+    "type": "audio",
+    "src": "media/Globosome Dawn.mp3",
+    "thumbnail": "thumbnails/dawn.jpg",
+    "moods": [
+      "Tension",
+      "Wonder"
+    ],
+    "settings": [
+      "Sci-Fi"
+    ],
+    "mediums": [
+      "Animation"
+    ],
+    "instrumentation": [
+      "Hybrid"
+    ],
+    "description": "A cinematic science-fiction cue moving between tension and discovery."
+  },
+  {
+    "title": "Alleviate",
+    "type": "audio",
+    "src": "media/Alleviate.mp3",
+    "thumbnail": "thumbnails/alleviate.jpg",
+    "moods": [
+      "Emotional",
+      "Atmospheric"
+    ],
+    "settings": [
+      "Contemporary"
+    ],
+    "mediums": [],
+    "instrumentation": [
+      "Chamber"
+    ],
+    "description": "An intimate, emotional piece with a cinematic focus."
+  },
+  {
+    "title": "Wing It",
+    "type": "audio",
+    "src": "media/Wing It.mp3",
+    "thumbnail": "thumbnails/wing-it.jpg",
+    "moods": [
+      "Comedy",
+      "Adventure"
+    ],
+    "settings": [],
+    "mediums": [
+      "Animation"
+    ],
+    "instrumentation": [
+      "Orchestral",
+      "Jazz / Big Band"
+    ],
+    "description": "A light cue with comic timing and animated energy."
+  },
+  {
+    "title": "Genforeningen",
+    "type": "audio",
+    "src": "media/Genforeningen.mp3",
+    "thumbnail": "thumbnails/genforeningen.jpg",
+    "moods": [
+      "Emotional",
+      "Atmospheric"
+    ],
+    "settings": [
+      "Historical"
+    ],
+    "mediums": [
+      "Animation"
+    ],
+    "instrumentation": [
+      "Contemporary Chamber"
+    ],
+    "description": "A contemporary piece shaped by warmth and emotional detail."
+  },
+  {
+    "title": "Kassiopeia",
+    "type": "audio",
+    "src": "media/Kassiopeia.mp3",
+    "thumbnail": "thumbnails/kassiopeia.jpg",
+    "moods": [
+      "Wonder",
+      "Atmospheric"
+    ],
+    "settings": [
+      "Fantasy"
+    ],
+    "mediums": [],
+    "instrumentation": [
+      "Contemporary Orchestral"
+    ],
+    "description": "A fantasy piece built around wonder and modern orchestral storytelling."
+  },
+  {
+    "title": "The Outlaw",
+    "type": "audio",
+    "src": "media/The Outlaw.mp3",
+    "thumbnail": "thumbnails/the-outlaw.jpg",
+    "moods": [
+      "Atmospheric"
+    ],
+    "settings": [
+      "Historical",
+      "World"
+    ],
+    "mediums": [],
+    "instrumentation": [
+      "Orchestral"
+    ],
+    "description": "An atmospheric orchestral cue for a historical narrative."
+  },
+  {
+    "title": "Memorize — Part I: The Last Observer",
+    "type": "audio",
+    "src": "media/Memorize - Part I - The Last Observer.mp3",
+    "thumbnail": "thumbnails/memorize-part-i.jpg",
+    "moods": [
+      "Tension",
+      "Action"
+    ],
+    "settings": [
+      "Sci-Fi"
+    ],
+    "mediums": [],
+    "instrumentation": [
+      "Hybrid",
+      "Electronic"
+    ],
+    "description": "The opening chapter of a dystopian science-fiction score, driven by tension, isolation and discovery."
+  },
+  {
+    "title": "Memorize — Part II: System Collapse",
+    "type": "audio",
+    "src": "media/Memorize - Part II - System Collapse.mp3",
+    "thumbnail": "thumbnails/memorize-part-ii.jpg",
+    "moods": [
+      "Tension",
+      "Action"
+    ],
+    "settings": [
+      "Sci-Fi"
+    ],
+    "mediums": [],
+    "instrumentation": [
+      "Hybrid",
+      "Electronic"
+    ],
+    "description": "A more forceful continuation of the dystopian science-fiction score, escalating into action and system collapse."
+  },
+  {
+    "title": "Secrets of Angels",
+    "type": "audio",
+    "src": "media/Secrets of Angels.mp3",
+    "thumbnail": "thumbnails/secrets-of-angels.jpg",
+    "moods": [
+      "Emotional"
+    ],
+    "settings": [
+      "Contemporary"
+    ],
+    "mediums": [],
+    "instrumentation": [
+      "Chamber"
+    ],
+    "description": "A restrained chamber cue for an intimate dramatic scene."
+  },
+  {
+    "title": "Metal Against Metal",
+    "type": "audio",
+    "src": "media/Metal Against Metal.mp3",
+    "thumbnail": "thumbnails/metal-against-metal.jpg",
+    "moods": [
+      "Action",
+      "Wonder"
+    ],
+    "settings": [
+      "Sci-Fi"
+    ],
+    "mediums": [],
+    "instrumentation": [
+      "Hybrid"
+    ],
+    "description": "A futuristic hybrid cue combining action with a sense of discovery."
+  },
+  {
+    "title": "Flying Into a New Realm",
+    "type": "audio",
+    "src": "media/Flying Into a New Realm.mp3",
+    "thumbnail": "thumbnails/flying-into-a-new-realm.jpg",
+    "moods": [
+      "Adventure",
+      "Wonder"
+    ],
+    "settings": [
+      "Fantasy"
+    ],
+    "mediums": [],
+    "instrumentation": [
+      "Orchestral"
+    ],
+    "description": "An expansive fantasy cue driven by flight and discovery."
+  },
+  {
+    "title": "Dusk",
+    "type": "audio",
+    "src": "media/Globosome Dusk.mp3",
+    "thumbnail": "thumbnails/dusk.jpg",
+    "moods": [
+      "Tension",
+      "Atmospheric"
+    ],
+    "settings": [
+      "Sci-Fi"
+    ],
+    "mediums": [
+      "Animation"
+    ],
+    "instrumentation": [
+      "Hybrid"
+    ],
+    "description": "A dark atmospheric science-fiction cue that gradually opens up."
+  },
+  {
+    "title": "Through the Door to Another World",
+    "type": "audio",
+    "src": "media/Through the Door to Another World.mp3",
+    "thumbnail": "thumbnails/through-the-door.jpg",
+    "moods": [
+      "Wonder",
+      "Adventure"
+    ],
+    "settings": [
+      "Fantasy"
+    ],
+    "mediums": [],
+    "instrumentation": [
+      "Contemporary Orchestral"
+    ],
+    "description": "A magical passage into an unfamiliar world."
+  },
+  {
+    "title": "A Journey With Unexpected Friends",
+    "type": "audio",
+    "src": "media/A Journey With Unexpected Friends.mp3",
+    "thumbnail": "thumbnails/a-journey-with-unexpected-friends.jpg",
+    "moods": [
+      "Adventure",
+      "Wonder"
+    ],
+    "settings": [
+      "Fantasy"
+    ],
+    "mediums": [],
+    "instrumentation": [
+      "Orchestral"
+    ],
+    "description": "A warm fantasy adventure shared with unlikely companions."
+  },
+  {
+    "title": "Lost in Time",
+    "type": "audio",
+    "src": "media/Lost in Time.mp3",
+    "thumbnail": "thumbnails/lost-in-time.jpg",
+    "moods": [
+      "Wonder",
+      "Atmospheric",
+      "Adventure"
+    ],
+    "settings": [
+      "Fantasy",
+      "World"
+    ],
+    "mediums": [
+      "Animation"
+    ],
+    "instrumentation": [
+      "World"
+    ],
+    "description": "A fantasy journey shaped by Chinese instrumental colours."
+  },
+  {
+    "title": "Off to New Adventures",
+    "type": "audio",
+    "src": "media/Off to New Adventures.mp3",
+    "thumbnail": "thumbnails/off-to-new-adventures.jpg",
+    "moods": [
+      "Adventure",
+      "Wonder"
+    ],
+    "settings": [
+      "Fantasy"
+    ],
+    "mediums": [],
+    "instrumentation": [
+      "Orchestral"
+    ],
+    "description": "An optimistic departure into a new adventure."
+  },
+  {
+    "title": "Forgotten Ruins — Action",
+    "type": "audio",
+    "src": "media/Game/Adventure Game - Action.mp3",
+    "thumbnail": "thumbnails/adventure-game-action.jpg",
+    "moods": [
+      "Action",
+      "Tension"
+    ],
+    "settings": [],
+    "mediums": [
+      "Game"
+    ],
+    "instrumentation": [
+      "Orchestral"
+    ],
+    "description": "A dynamic action cue for an adventure-game sequence."
+  },
+  {
+    "title": "Forgotten Ruins — Ambient",
+    "type": "audio",
+    "src": "media/Game/Adventure Game - Ambient.mp3",
+    "thumbnail": "thumbnails/adventure-game-ambient.jpg",
+    "moods": [
+      "Atmospheric",
+      "Tension"
+    ],
+    "settings": [],
+    "mediums": [
+      "Game"
+    ],
+    "instrumentation": [
+      "Orchestral"
+    ],
+    "description": "Dark atmospheric exploration music for an adventure game."
+  },
+  {
+    "title": "Forgotten Ruins — Suspense",
+    "type": "audio",
+    "src": "media/Game/Adventure Game - Suspense.mp3",
+    "thumbnail": "thumbnails/adventure-game-suspense.jpg",
+    "moods": [
+      "Tension",
+      "Atmospheric"
+    ],
+    "settings": [],
+    "mediums": [
+      "Game"
+    ],
+    "instrumentation": [
+      "Orchestral"
+    ],
+    "description": "A suspenseful game cue with an imminent sense of threat."
+  }
+]

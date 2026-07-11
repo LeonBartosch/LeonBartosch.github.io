@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Léon Bartosch — Music for Stories" />
+    <title>Léon Bartosch — Music for Stories</title>
+
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>♪</text></svg>"
+    />
+    <link rel="stylesheet" href="assets/css/style.css?v=22.9" />
+  </head>
+
+  <body>
+    <header class="site-header" id="site-header">
+      <a class="brand" href="#top">LÉON BARTOSCH</a>
+
+      <button
+        class="nav-toggle"
+        id="nav-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="site-nav"
+        aria-label="Open navigation"
+      >
+        <span></span>
+        <span></span>
+      </button>
+
+      <nav id="site-nav" aria-label="Primary navigation">
+        <a href="#music">Music</a>
+        <a href="#picture">Scored Projects</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero" id="hero">
+        <img
+          class="hero-image"
+          src="assets/img/hero.jpg"
+          alt="Léon Bartosch at the coast"
+        />
+        <div class="hero-overlay"></div>
+
+        <div class="hero-content">
+          <p class="eyebrow eyebrow--light">Composer for visual media</p>
+          <h1>Music for<br />Stories.</h1>
+          <div class="hero-rule"></div>
+          <p class="hero-intro">
+            Original scores shaped around<br />
+            story, emotion &amp; character.
+          </p>
+
+          <div class="hero-actions">
+            <a class="hero-button" href="#music">
+              <span aria-hidden="true">▶</span>
+              Explore the music
+            </a>
+            <a class="hero-link" href="#picture">Watch selected work</a>
+          </div>
+        </div>
+
+        <div class="scroll-cue" aria-hidden="true"></div>
+      </section>
+
+      <section class="section music-section" id="music">
+        <div class="music-heading" id="selected-heading">
+          <p class="eyebrow">Selected music</p>
+          <h2>A few places to begin.</h2>
+        </div>
+
+        <div id="audio-grid" class="audio-grid" aria-live="polite"></div>
+
+        <div class="explore-panel explore-panel--invitation" id="explore-panel">
+          <div class="explore-panel__top">
+            <button class="explore-all" id="explore-all" type="button">
+              <span class="explore-all-label">Explore all tracks</span>
+              <span class="explore-all-arrow" aria-hidden="true">↓</span>
+            </button>
+
+            <div
+              class="explore-moods"
+              id="mood-filters"
+              aria-label="Explore by mood"
+            ></div>
+
+            <button
+              class="more-toggle"
+              id="more-toggle"
+              type="button"
+              aria-expanded="false"
+              aria-controls="more-filters"
+              hidden
+            >
+              <span aria-hidden="true">+</span>
+              More
+            </button>
+          </div>
+
+          <div class="more-filters" id="more-filters" hidden>
+            <div id="world-filters" aria-label="Explore by world or medium"></div>
+          </div>
+
+          <button class="clear-filters" id="clear-filters" type="button" hidden>
+            Clear selection
+          </button>
+        </div>
+
+        <div class="return-selected-wrap" id="return-selected-wrap" hidden>
+          <button class="return-selected" id="return-selected" type="button">
+            <span class="return-selected-label">Selected music</span>
+            <span class="return-selected-arrow" aria-hidden="true">↑</span>
+          </button>
+        </div>
+
+      </section>
+
+      <section class="section video-section" id="picture">
+        <div class="video-heading">
+          <div>
+            <p class="eyebrow">Scored Projects</p>
+            <h2>For the Screen.</h2>
+          </div>
+          <p>Selected work composed for moving image.</p>
+        </div>
+
+        <div id="video-grid" class="video-grid"></div>
+      </section>
+
+      <section class="section about-section" id="about">
+        <p class="eyebrow">About</p>
+        <h2>Finding the musical voice of a story.</h2>
+
+        <p class="about-lead">
+          I am a composer and psychologist with degrees in Psychology and
+          Media Composition &amp; Orchestration.
+        </p>
+
+        <p>
+          I create music for film, animation and visual media. Alongside
+          composing, I am pursuing a doctorate in psychology, researching how
+          the human brain perceives timbre and auditory scenes.
+        </p>
+      </section>
+
+      <section class="section contact-section" id="contact">
+        <p class="eyebrow">Contact</p>
+        <h2>Let’s create something memorable.</h2>
+        <a id="contact-email" href="mailto:leon.bartosch@gmail.com">
+          leon.bartosch@gmail.com
+        </a>
+      </section>
+    </main>
+
+    <footer id="site-footer">
+      <span>© <span id="year"></span> Léon Bartosch</span>
+
+      <div class="footer-links">
+        <span>Music for Stories</span>
+        <a href="impressum.html">Impressum</a>
+      </div>
+    </footer>
+
+    <aside
+      class="persistent-player"
+      id="persistent-player"
+      aria-label="Audio player"
+      hidden
+    >
+      <img class="player-artwork" id="player-artwork" alt="" />
+
+      <div class="player-main">
+        <div class="player-heading">
+          <div class="player-copy">
+            <strong id="player-title">Not playing</strong>
+            <span id="player-meta"></span>
+          </div>
+
+          <button
+            class="player-dismiss"
+            id="player-dismiss"
+            type="button"
+            aria-label="Close audio player"
+          ></button>
+        </div>
+
+        <div class="player-controls">
+          <button
+            class="player-skip player-previous"
+            id="player-previous"
+            type="button"
+            aria-label="Previous track"
+          >
+            <span aria-hidden="true"></span>
+          </button>
+
+          <button
+            class="player-toggle"
+            id="player-toggle"
+            type="button"
+            aria-label="Play"
+          >
+            <span class="player-toggle-icon" aria-hidden="true"></span>
+          </button>
+
+          <button
+            class="player-skip player-next"
+            id="player-next"
+            type="button"
+            aria-label="Next track"
+          >
+            <span aria-hidden="true"></span>
+          </button>
+
+          <span class="player-time" id="player-current">0:00</span>
+
+          <input
+            class="player-progress"
+            id="player-progress"
+            type="range"
+            min="0"
+            max="1000"
+            value="0"
+            aria-label="Track position"
+          />
+
+          <span class="player-time" id="player-duration">0:00</span>
+        </div>
+      </div>
+
+      <audio id="global-audio" preload="metadata"></audio>
+    </aside>
+
+    <dialog id="modal">
+      <button id="modal-close" aria-label="Close"></button>
+      <div id="modal-content"></div>
+    </dialog>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+    <script src="assets/js/app.js?v=22.3"></script>
+  </body>
+</html>

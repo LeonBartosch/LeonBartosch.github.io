@@ -1,0 +1,9 @@
+.DS_Store
+__MACOSX/
+*.zip
+*.bak
+*.bak-*
+README_PATCH.md
+scripts/
+
+node_modules/

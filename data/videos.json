@@ -1,0 +1,103 @@
+[
+  {
+    "title": "Walter",
+    "subtitle": "Whimsical Fantasy Animation",
+    "type": "youtube",
+    "src": "https://www.youtube.com/embed/vTUI2UJttgY",
+    "thumbnail": "thumbnails/walter.jpg",
+    "moods": [
+      "Wonder",
+      "Comedy"
+    ],
+    "settings": [
+      "Fantasy"
+    ],
+    "mediums": [
+      "Animation"
+    ],
+    "instrumentation": [
+      "Orchestral"
+    ],
+    "description": "A whimsical orchestral rescore for an animated short, following a quiet gardener whose carefully ordered world opens into an unexpected adventure."
+  },
+  {
+    "title": "The Rise and Fall of Globosome",
+    "subtitle": "Animated Sci-Fi Parable",
+    "type": "youtube",
+    "src": "https://www.youtube.com/embed/uAzxtHj7Pac",
+    "moods": [
+      "Tension",
+      "Wonder"
+    ],
+    "settings": [
+      "Sci-Fi"
+    ],
+    "mediums": [
+      "Animation"
+    ],
+    "instrumentation": [
+      "Hybrid"
+    ],
+    "description": "A cinematic hybrid rescore for an animated science-fiction parable about the evolution, technological rise and eventual collapse of a strange civilisation."
+  },
+  {
+    "title": "Genforeningen",
+    "subtitle": "Historical Animation",
+    "type": "youtube",
+    "src": "https://www.youtube.com/embed/ECAh6QTg2Sk",
+    "thumbnail": "thumbnails/genforeningen.jpg",
+    "moods": [
+      "Emotional",
+      "Atmospheric"
+    ],
+    "settings": [
+      "Historical"
+    ],
+    "mediums": [
+      "Animation"
+    ],
+    "instrumentation": [
+      "Chamber"
+    ],
+    "description": "An intimate contemporary chamber score for an animated narrative, balancing personal reflection with a restrained sense of memory, separation and reunion."
+  },
+  {
+    "title": "Wing It!",
+    "subtitle": "Animated Adventure Comedy",
+    "type": "youtube",
+    "src": "https://www.youtube.com/embed/5mvQPmqh914",
+    "thumbnail": "thumbnails/wing-it.jpg",
+    "moods": [
+      "Comedy",
+      "Adventure"
+    ],
+    "settings": [],
+    "mediums": [
+      "Animation"
+    ],
+    "instrumentation": [
+      "Orchestral",
+      "Jazz / Big Band"
+    ],
+    "description": "A playful orchestral and big-band rescore for a fast-paced animated adventure, shaped around physical comedy, escalating mishaps and energetic musical timing."
+  },
+  {
+    "title": "The Outlaw",
+    "subtitle": "Historical Drama",
+    "type": "youtube",
+    "src": "https://www.youtube.com/embed/_JwCYjTuH-0",
+    "thumbnail": "thumbnails/the-outlaw.jpg",
+    "moods": [
+      "Atmospheric"
+    ],
+    "settings": [
+      "Historical",
+      "World"
+    ],
+    "mediums": [],
+    "instrumentation": [
+      "Orchestral"
+    ],
+    "description": "An atmospheric orchestral score for a historical drama centred on forbidden love, loyalty and conflict."
+  }
+]
