@@ -1,5 +1,25 @@
 [
   {
+    "title": "Genforeningen",
+    "type": "audio",
+    "src": "media/Genforeningen.mp3",
+    "thumbnail": "thumbnails/genforeningen.jpg",
+    "moods": [
+      "Emotional",
+      "Atmospheric"
+    ],
+    "settings": [
+      "Historical"
+    ],
+    "mediums": [
+      "Animation"
+    ],
+    "instrumentation": [
+      "Contemporary Chamber"
+    ],
+    "description": "A contemporary piece shaped by warmth and emotional detail."
+  },
+  {
     "title": "Walter",
     "type": "audio",
     "src": "media/Walter.mp3",
@@ -75,26 +95,6 @@
       "Jazz / Big Band"
     ],
     "description": "A light cue with comic timing and animated energy."
-  },
-  {
-    "title": "Genforeningen",
-    "type": "audio",
-    "src": "media/Genforeningen.mp3",
-    "thumbnail": "thumbnails/genforeningen.jpg",
-    "moods": [
-      "Emotional",
-      "Atmospheric"
-    ],
-    "settings": [
-      "Historical"
-    ],
-    "mediums": [
-      "Animation"
-    ],
-    "instrumentation": [
-      "Contemporary Chamber"
-    ],
-    "description": "A contemporary piece shaped by warmth and emotional detail."
   },
   {
     "title": "Kassiopeia",
