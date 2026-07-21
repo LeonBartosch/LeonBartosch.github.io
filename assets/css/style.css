@@ -505,6 +505,9 @@ h2 {
   right: 4.1rem;
   bottom: 1rem;
   left: 1.1rem;
+  max-height: calc(100% - 2rem);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .card-copy h3 {
@@ -512,6 +515,7 @@ h2 {
   font-size: 1.25rem;
   font-weight: 500;
   line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 
 .card-meta {

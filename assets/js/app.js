@@ -167,6 +167,7 @@ async function init() {
   bindPlayer();
   bindModal();
   bindResponsive();
+  setupLayoutMetrics();
   setupPlayerAvoidance();
   setupMotion();
 }
@@ -436,6 +437,28 @@ function moveExplorePanel(position, { animate = true } = {}) {
 
   if (!animate || !window.gsap) return;
 
+  /*
+   * Do not transform the panel after it becomes sticky. Chromium and Gecko
+   * include transforms in sticky positioning differently while the transform
+   * is active. Animating its contents preserves the transition without
+   * changing the sticky element's coordinate system.
+   */
+  if (position === "above") {
+    gsap.fromTo(
+      elements.explorePanel.children,
+      { opacity: 0, y: 10 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.45,
+        ease: "power3.out",
+        stagger: 0.035,
+        clearProps: "transform,opacity",
+      },
+    );
+    return;
+  }
+
   const deltaX = oldRect.left - newRect.left;
   const deltaY = oldRect.top - newRect.top;
 
@@ -563,6 +586,7 @@ function animateCatalogueTransition() {
       opacity: 1,
       y: 0,
       duration: 0.85,
+      clearProps: "transform,opacity",
     },
     0.12,
   );
@@ -585,6 +609,7 @@ function animateSelectedTransition() {
       duration: 0.65,
       ease: "power3.out",
       stagger: 0.055,
+      clearProps: "transform,opacity",
     },
   );
 }
@@ -611,6 +636,7 @@ function animateCards(cards) {
       ease: "power3.out",
       stagger: 0.045,
       overwrite: true,
+      clearProps: "transform,opacity",
     },
   );
 }
@@ -658,6 +684,49 @@ function bindResponsive() {
     query.addEventListener("change", handleChange);
   } else {
     query.addListener(handleChange);
+  }
+}
+
+function setupLayoutMetrics() {
+  if (!elements.header) return;
+
+  let scheduled = false;
+
+  const updateHeaderHeight = () => {
+    scheduled = false;
+    const height = Math.ceil(elements.header.getBoundingClientRect().height);
+    const value = `${height}px`;
+
+    if (
+      height > 0 &&
+      document.documentElement.style.getPropertyValue("--header-height") !==
+        value
+    ) {
+      document.documentElement.style.setProperty(
+        "--header-height",
+        value,
+      );
+      refreshScrollTrigger();
+    }
+  };
+
+  const requestUpdate = () => {
+    if (scheduled) return;
+    scheduled = true;
+    window.requestAnimationFrame(updateHeaderHeight);
+  };
+
+  requestUpdate();
+  window.addEventListener("resize", requestUpdate);
+  window.addEventListener("orientationchange", requestUpdate);
+
+  if (typeof ResizeObserver === "function") {
+    const observer = new ResizeObserver(requestUpdate);
+    observer.observe(elements.header);
+  }
+
+  if (document.fonts?.ready) {
+    document.fonts.ready.then(requestUpdate).catch(() => {});
   }
 }
 
