@@ -1121,6 +1121,7 @@ function setupMotion() {
   gsap.to(".hero-image", {
     yPercent: 13,
     scale: 1.13,
+    force3D: true,
     ease: "none",
     scrollTrigger: {
       trigger: ".hero",
