@@ -81,11 +81,44 @@
 
     <main id="top">
       <section class="hero" id="hero">
-        <img
-          class="hero-image"
-          src="assets/img/hero.jpg"
-          alt="Léon Bartosch at the coast"
-        />
+        <picture class="hero-picture">
+          <source
+            type="image/avif"
+            srcset="
+              assets/generated/hero/hero-768.avif 768w,
+              assets/generated/hero/hero-1280.avif 1280w,
+              assets/generated/hero/hero-1920.avif 1920w,
+              assets/generated/hero/hero-2248.avif 2248w
+            "
+            sizes="100vw"
+          />
+          <source
+            type="image/webp"
+            srcset="
+              assets/generated/hero/hero-768.webp 768w,
+              assets/generated/hero/hero-1280.webp 1280w,
+              assets/generated/hero/hero-1920.webp 1920w,
+              assets/generated/hero/hero-2248.webp 2248w
+            "
+            sizes="100vw"
+          />
+          <img
+            class="hero-image"
+            src="assets/generated/hero/hero-1280.jpg"
+            srcset="
+              assets/generated/hero/hero-768.jpg 768w,
+              assets/generated/hero/hero-1280.jpg 1280w,
+              assets/generated/hero/hero-1920.jpg 1920w,
+              assets/generated/hero/hero-2248.jpg 2248w
+            "
+            sizes="100vw"
+            width="2248"
+            height="2048"
+            alt="Léon Bartosch at the coast"
+            decoding="async"
+            fetchpriority="high"
+          />
+        </picture>
         <div class="hero-overlay"></div>
 
         <div class="hero-content">
@@ -287,13 +320,13 @@
       <audio id="global-audio" preload="metadata"></audio>
     </aside>
 
-    <dialog id="modal">
+    <dialog id="modal" aria-modal="true">
       <button id="modal-close" aria-label="Close"></button>
       <div id="modal-content"></div>
     </dialog>
 
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
-    <script src="assets/js/app.js?v=25"></script>
+    <script src="assets/vendor/gsap.min.js?v=3.15.0"></script>
+    <script src="assets/vendor/ScrollTrigger.min.js?v=3.15.0"></script>
+    <script src="assets/js/app.js?v=26"></script>
   </body>
 </html>

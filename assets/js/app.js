@@ -48,6 +48,7 @@ const elements = {
 
 let currentTrack = null;
 let transitionTimeline = null;
+let modalReturnFocus = null;
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (character) => {
@@ -256,6 +257,52 @@ function metadataMarkup(work) {
   `;
 }
 
+function responsiveThumbnailPath(thumbnail, width, format) {
+  const fileName = thumbnail.split("/").pop() || "";
+  const stem = fileName.replace(/\.jpe?g$/i, "");
+
+  return `assets/generated/cards/${stem}-${width}.${format}`;
+}
+
+function responsiveThumbnailMarkup(
+  thumbnail,
+  className,
+  sizes,
+  { lazy = true, fallback = "remove" } = {},
+) {
+  const widths = [320, 640, 960, 1440];
+  const sourceSet = (format) =>
+    widths
+      .map(
+        (width) =>
+          `${escapeHtml(responsiveThumbnailPath(thumbnail, width, format))} ${width}w`,
+      )
+      .join(", ");
+
+  const fallbackHandler =
+    fallback === "original"
+      ? `this.onerror=null;this.src='${escapeHtml(thumbnail)}'`
+      : "this.remove()";
+
+  return `
+    <picture>
+      <source type="image/avif" srcset="${sourceSet("avif")}" sizes="${sizes}">
+      <source type="image/webp" srcset="${sourceSet("webp")}" sizes="${sizes}">
+      <img
+        class="${className}"
+        src="${escapeHtml(responsiveThumbnailPath(thumbnail, 640, "jpg"))}"
+        srcset="${sourceSet("jpg")}"
+        sizes="${sizes}"
+        width="1440"
+        height="1440"
+        alt=""
+        decoding="async"
+        ${lazy ? 'loading="lazy"' : ""}
+        onerror="${fallbackHandler}">
+    </picture>
+  `;
+}
+
 function renderAudio({ animate = false } = {}) {
   const tracks = visibleTracks();
 
@@ -269,11 +316,11 @@ function renderAudio({ animate = false } = {}) {
               data-work-index="${state.works.indexOf(work)}">
               ${
                 work.thumbnail
-                  ? `<img
-                       class="card-media"
-                       src="${escapeHtml(work.thumbnail)}"
-                       alt=""
-                       onerror="this.remove()">`
+                  ? responsiveThumbnailMarkup(
+                      work.thumbnail,
+                      "card-media",
+                      "(max-width: 760px) calc(100vw - 2.4rem), (max-width: 1000px) 46vw, 300px",
+                    )
                   : `<div class="fallback"></div>`
               }
 
@@ -320,17 +367,23 @@ function videoThumbnailMarkup(work) {
 
   if (!preferred) return `<div class="fallback"></div>`;
 
-  const fallback =
-    work.thumbnail && automatic
-      ? `onerror="this.onerror=null;this.src='${escapeHtml(automatic)}'"`
-      : `onerror="this.remove()"`;
+  if (work.thumbnail) {
+    return responsiveThumbnailMarkup(
+      work.thumbnail,
+      "video-media",
+      "(max-width: 760px) calc(100vw - 2.4rem), (max-width: 1000px) 46vw, 250px",
+      { fallback: "original" },
+    );
+  }
 
   return `
     <img
       class="video-media"
       src="${escapeHtml(preferred)}"
+      loading="lazy"
+      decoding="async"
       alt=""
-      ${fallback}>
+      onerror="this.remove()">
   `;
 }
 
@@ -839,7 +892,15 @@ async function playTrack(track) {
   ].join(" · ");
 
   if (track.thumbnail) {
-    elements.playerArtwork.src = track.thumbnail;
+    elements.playerArtwork.onerror = () => {
+      elements.playerArtwork.onerror = null;
+      elements.playerArtwork.src = track.thumbnail;
+    };
+    elements.playerArtwork.src = responsiveThumbnailPath(
+      track.thumbnail,
+      320,
+      "webp",
+    );
     elements.playerArtwork.hidden = false;
   } else {
     elements.playerArtwork.hidden = true;
@@ -1042,6 +1103,15 @@ function bindModal() {
     event.preventDefault();
     closeModal();
   });
+
+  document.addEventListener("keydown", (event) => {
+    if (
+      event.key === "Escape" &&
+      elements.modal.classList.contains("is-fallback-open")
+    ) {
+      closeModal();
+    }
+  });
 }
 
 function openVideo(work) {
@@ -1087,14 +1157,36 @@ function openVideo(work) {
     </div>
   `;
 
+  modalReturnFocus = document.activeElement;
   document.body.classList.add("modal-open");
-  elements.modal.showModal();
+
+  if (typeof elements.modal.showModal === "function") {
+    elements.modal.showModal();
+  } else {
+    elements.modal.setAttribute("open", "");
+    elements.modal.classList.add("is-fallback-open");
+    document.body.classList.add("modal-fallback-open");
+    elements.modalClose.focus();
+  }
 }
 
 function closeModal() {
-  elements.modal.close();
+  if (typeof elements.modal.close === "function") {
+    elements.modal.close();
+  } else {
+    elements.modal.removeAttribute("open");
+  }
+
+  elements.modal.classList.remove("is-fallback-open");
+  document.body.classList.remove("modal-fallback-open");
   elements.modalContent.innerHTML = "";
   document.body.classList.remove("modal-open");
+
+  if (modalReturnFocus instanceof HTMLElement) {
+    modalReturnFocus.focus();
+  }
+
+  modalReturnFocus = null;
 }
 
 function setupMotion() {

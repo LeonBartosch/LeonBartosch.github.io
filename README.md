@@ -12,7 +12,13 @@ Then open `http://localhost:8000`.
 
 ## Important
 
-GSAP is loaded from jsDelivr, so the animated version requires an internet connection. If the CDN cannot load, the site automatically uses simpler native reveal animations and remains fully usable.
+GSAP and ScrollTrigger are pinned and self-hosted in `assets/vendor`, so the animation does not depend on a third-party CDN. If either library cannot load, the site automatically uses simpler native motion and remains fully usable.
+
+Responsive AVIF, WebP and JPEG variants are committed in `assets/generated`. Regenerate them after changing a source hero or thumbnail with:
+
+```bash
+./tools/generate-responsive-images.sh
+```
 
 ## Motion included
 
