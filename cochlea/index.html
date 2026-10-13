@@ -333,6 +333,7 @@ let SP_W = 2, SP_H = 2;                                  // bounding box of the 
   SP_W = x1 - x0; SP_H = y1 - y0;
 })();
 const spiralScale = (w, h) => Math.min((w - 2 * PAD_X) / SP_W, (h - 2 * PAD_Y) / SP_H);
+let capAlpha = 1;                                       // axis captions fade in when an animation ends, vanish when one starts
 let rollM = 0, rollFrom = 0, rollTo = 0, rollT0 = 0, rolling = false;
 const ROLL_MS = 3200;
 const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -509,29 +510,29 @@ function drawCochlea() {
   const capL = "← apex · low frequencies", capR = "base · high frequencies →", capB = "displacement after compression xᶜ";
   g.textAlign = "left"; g.fillText(capB, 12, h - 10);
   labelRects.push({ x0: 12, x1: 12 + g.measureText(capB).width, y0: h - 16, y1: h - 4, text: "caption B" });
-  // Axis captions: in the corners when unrolled, at the two ends of the membrane when rolled up
-  const aFlat = Math.max(0, (rollM - 0.5) * 2), aRolled = Math.max(0, 1 - rollM * 2);
-  if (aFlat > 0) {
+  // Axis captions: in the corners when unrolled, at the two ends of the membrane when rolled up. Hidden while the animation runs.
+  const aFlat = rollM >= 0.5 ? capAlpha : 0, aRolled = rollM < 0.5 ? capAlpha : 0;
+  if (aFlat > 0.01) {
     g.globalAlpha = aFlat;
     g.textAlign = "left"; g.fillText(capL, 12, 20); g.textAlign = "right"; g.fillText(capR, w - 12, 20); g.globalAlpha = 1;
-    if (aFlat > 0.5) labelRects.push({ x0: 12, x1: 12 + g.measureText(capL).width, y0: 10, y1: 26, text: "caption L" },
-                                     { x0: w - 12 - g.measureText(capR).width, x1: w - 12, y0: 10, y1: 26, text: "caption R" });
+    labelRects.push({ x0: 12, x1: 12 + g.measureText(capL).width, y0: 10, y1: 26, text: "caption L" },
+                    { x0: w - 12 - g.measureText(capR).width, x1: w - 12, y0: 10, y1: 26, text: "caption R" });
   }
-  if (aRolled > 0) {
-    const endLabel = (text, j) => {                       // at the free end of the membrane, in the direction with the most clearance
-      const d = tubeW / 2 + 24; let best = null, bs = -1;
-      for (let k = 0; k < 16; k++) {
-        const ang = k * Math.PI / 8, x = geo.x[j] + Math.cos(ang) * d, y = geo.y[j] + Math.sin(ang) * d;
-        let sc = 1e9;
-        for (let q = 0; q < NF; q += 4) sc = Math.min(sc, Math.hypot(geo.x[q] - x, geo.y[q] - y) - (Math.abs(q - j) < 8 ? d - 4 : 0));
-        labelRects.forEach(r => { sc = Math.min(sc, Math.hypot((r.x0 + r.x1) / 2 - x, (r.y0 + r.y1) / 2 - y) - (r.x1 - r.x0) / 2 - 14); });   // tick labels and markers
-        if (sc > bs) { bs = sc; best = [x, y]; }
-      }
-      const [x, y] = best;
-      g.globalAlpha = aRolled; g.textAlign = "center"; g.fillText(text, x, y); g.globalAlpha = 1;
-      if (aRolled > 0.5) { const wd = g.measureText(text).width; labelRects.push({ x0: x - wd / 2, x1: x + wd / 2, y0: y - 6, y1: y + 6, text }); }
-    };
-    g.textBaseline = "middle"; endLabel("base", 0); endLabel("apex", NF - 1); g.textBaseline = "alphabetic";
+  if (aRolled > 0.01) {
+    g.globalAlpha = aRolled; g.textBaseline = "middle"; g.textAlign = "center";
+    // base: just beyond the outer tube end, continuing the membrane's direction backwards
+    let a = 0, b = 2, tx = geo.x[a] - geo.x[b], ty = geo.y[a] - geo.y[b], l = Math.hypot(tx, ty) || 1;
+    const bd = tubeW / 2 + 22, bx = geo.x[0] + tx / l * bd, by = geo.y[0] + ty / l * bd;
+    g.fillText("base", bx, by);
+    // apex: in the middle of the innermost turn, joined to the membrane tip by a thin line
+    let cx = 0, cy = 0, n = 0; for (let q = Math.floor(NF * 0.64); q < NF; q++) { cx += geo.x[q]; cy += geo.y[q]; n++; }
+    cx /= n; cy /= n;
+    const ex = geo.x[NF - 1], ey = geo.y[NF - 1], dl = Math.hypot(ex - cx, ey - cy) || 1, tw = g.measureText("apex").width / 2 + 6;
+    g.strokeStyle = T.tick; g.lineWidth = 1; g.beginPath();
+    g.moveTo(cx + (ex - cx) / dl * tw, cy + (ey - cy) / dl * tw); g.lineTo(ex, ey); g.stroke();
+    g.fillText("apex", cx, cy);
+    g.globalAlpha = 1;
+    labelRects.push({ x0: bx - 14, x1: bx + 14, y0: by - 6, y1: by + 6, text: "base" }, { x0: cx - 14, x1: cx + 14, y0: cy - 6, y1: cy + 6, text: "apex" });
   }
   g.textAlign = "left";
   window.__overlaps = [];
@@ -713,6 +714,7 @@ function frame(now) {
     if (t >= 1) { rolling = false; $("unroll").disabled = false; $("unroll").textContent = rollTo === 1 ? "Roll up" : "Unroll"; }
   }
   if (playing && currentPos() >= duration - 1e-3) endReached();
+  capAlpha += ((rolling ? 0 : 1) - capAlpha) * 0.2;
   layoutMain();
   advance();
   refreshCg(false);
@@ -778,7 +780,7 @@ $("speed").addEventListener("input", e => {
   $("audiohint").textContent = rate < MIN_AUDIO_RATE ? "(audio is silent below ×16 slow-down)" : "";
 });
 $("unroll").addEventListener("click", () => {
-  rollFrom = rollM; rollTo = rollM < 0.5 ? 1 : 0; rollT0 = performance.now(); rolling = true; $("unroll").disabled = true;
+  capAlpha = 0; rollFrom = rollM; rollTo = rollM < 0.5 ? 1 : 0; rollT0 = performance.now(); rolling = true; $("unroll").disabled = true;
 });
 const dbText = db => (db > 0 ? "+" : "") + db + " dB";
 function updateGain(rerun = true) {                  // total analysis gain = auto gain (optional) × manual input gain
