@@ -711,7 +711,7 @@ function frame(now) {
   if (rolling) {
     const t = Math.min(1, (now - rollT0) / ROLL_MS);
     rollM = rollFrom + (rollTo - rollFrom) * ease(t);
-    if (t >= 1) { rolling = false; $("unroll").disabled = false; $("unroll").textContent = rollTo === 1 ? "Roll up" : "Unroll"; }
+    if (t >= 1) { rolling = false; $("unroll").disabled = false; $("unroll").textContent = rollTo === 1 ? "Roll" : "Unroll"; }
   }
   if (playing && currentPos() >= duration - 1e-3) endReached();
   capAlpha += ((rolling ? 0 : 1) - capAlpha) * 0.2;
