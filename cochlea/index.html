@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cochlea — Léon Bartosch</title>
+<meta name="description" content="Live model of the human cochlea: basilar membrane, hair cells and adaptation, computed on the audio you play.">
+<link rel="icon" href="https://leonbartosch.com/assets/img/favicon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --paper: #f4f0e8; --surface: #fffdf8; --ink: #2a2824; --muted: #746e65;
+    --line: rgba(42, 40, 36, 0.16); --line-strong: rgba(42, 40, 36, .35); --gold: #c5a56b;
+    color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    --paper: #12161c; --surface: #191e26; --ink: #e8e6e1; --muted: #98a0ab;
+    --line: rgba(232, 230, 225, 0.14); --line-strong: rgba(232, 230, 225, .38); --gold: #c5a56b;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+         background: var(--paper); color: var(--ink);
+         font: 14px/1.4 Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+
+  .top { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem 1rem; padding: .55rem 1rem;
+         background: var(--surface); border-bottom: 1px solid var(--line); }
+  .home { color: var(--muted); font-size: .62rem; letter-spacing: .16em; text-transform: uppercase; text-decoration: none;
+          border: 1px solid var(--line); border-radius: .2rem; padding: .45rem .7rem; }
+  .home:hover { color: var(--ink); border-color: var(--gold); }
+  .brand { font-family: Georgia, "Times New Roman", serif; font-size: 1.3rem; letter-spacing: -.03em; margin-right: .4rem; }
+  .top label, .settings label { display: flex; align-items: center; gap: .5rem; color: var(--muted); font-size: .62rem;
+               letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; }
+  .val { color: var(--ink); min-width: 3.4em; letter-spacing: .02em; text-transform: none; font-size: .76rem;
+         font-variant-numeric: tabular-nums; }
+  .hint { color: var(--muted); font-size: .72rem; letter-spacing: 0; text-transform: none; }
+  .spacer { flex: 1; }
+  select { background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: .2rem; padding: .42rem .6rem;
+           font: inherit; font-size: .72rem; max-width: 15rem; cursor: pointer; }
+  select:hover { border-color: var(--gold); }
+  .pipeline { color: var(--muted); font-size: .72rem; }
+  @media (max-width: 1250px) { .pipeline { display: none; } }
+  button, .filebtn { display: inline-flex; align-items: center; padding: .45rem .8rem; background: var(--paper);
+         color: var(--ink); border: 1px solid var(--line); border-radius: .2rem; cursor: pointer; font: inherit;
+         font-size: .62rem; letter-spacing: .16em; text-transform: uppercase;
+         transition: border-color .2s ease, transform .2s ease; }
+  button:hover:not(:disabled), .filebtn:hover { border-color: var(--gold); transform: translateY(-1px); }
+  button:disabled { opacity: .45; cursor: default; }
+  button.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .filebtn input { display: none; }
+  .time { color: var(--muted); font-size: .76rem; font-variant-numeric: tabular-nums; min-width: 8em; }
+  input[type=checkbox] { accent-color: var(--gold); width: .9rem; height: .9rem; margin: 0; }
+  input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; height: 18px; margin: 0; cursor: pointer; }
+  input[type=range]::-webkit-slider-runnable-track { height: 1px; background: var(--line-strong); }
+  input[type=range]::-moz-range-track { height: 1px; background: var(--line-strong); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; margin-top: -6px;
+         border-radius: 50%; background: var(--gold); border: 1px solid var(--ink); }
+  input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 50%; background: var(--gold); border: 1px solid var(--ink); }
+
+  .cw { position: relative; min-height: 0; min-width: 0; background: var(--surface); border: 1px solid var(--line); }
+  .cw canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #cgwrap { flex: 0 0 clamp(150px, 27vh, 280px); margin: .6rem 1rem 0; }
+  #cochleagram { cursor: pointer; }
+  .main { flex: 1 1 0; min-height: 0; position: relative; margin: .6rem 1rem; }       /* children are placed by layoutMain() */
+  .main > .cw, .hc { position: absolute; }
+  #cochlea { touch-action: none; }
+  #panels { display: contents; }
+  .hc { display: flex; flex-direction: column; min-height: 0; background: var(--surface); border: 1px solid var(--line); padding: .35rem .5rem .5rem; }
+  .hc h3 { margin: 0 0 .25rem; font-size: .6rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+           display: flex; align-items: center; gap: .5rem; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .hc .cw { flex: 1; border: 0; background: var(--paper); }
+  .hc .fr { margin-left: auto; color: var(--muted); font-weight: 400; letter-spacing: .03em; text-transform: none;
+            font-size: .72rem; font-variant-numeric: tabular-nums; }
+  .settings { display: flex; flex-wrap: wrap; align-items: center; gap: .2rem 1.2rem; padding: .35rem 1rem .55rem;
+              border-top: 1px solid var(--line); }
+  .settings input[type=range] { width: 90px; }
+  .settings[hidden] { display: none; }
+  /* portrait / narrow: one scrolling column, everything (including the settings) stays reachable */
+  @media (max-aspect-ratio: 1/1), (max-width: 900px) {
+    html, body { height: auto; }
+    body { min-height: 100vh; overflow: auto; }
+    .top, .settings { flex: none; }
+    #cgwrap { flex: none; height: clamp(150px, 24vh, 240px); }
+    .main { flex: none; display: flex; flex-direction: column; gap: .6rem; }
+    .main > .cw, .hc { position: relative; }
+    .hc { height: 190px; }
+    #panels { display: contents; }
+  }
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="home" href="https://leonbartosch.com/" title="Back to leonbartosch.com">← Home</a>
+  <span class="brand">Cochlea</span>
+  <span class="pipeline">gammatone filterbank → compression → rectification → low-pass → adaptation</span>
+  <label class="filebtn">Load audio<input id="file" type="file" accept="audio/*"></label>
+  <select id="example" aria-label="Examples">
+    <option value="" disabled selected>Examples…</option>
+    <option value="tone">Test tone (sweep, harmonics, chord)</option>
+    <optgroup label="Music by Léon Bartosch">
+      <option value="Genforeningen.mp3">Genforeningen</option>
+      <option value="Walter.mp3">Walter</option>
+      <option value="Globosome Dawn.mp3">Dawn</option>
+      <option value="Alleviate.mp3">Alleviate</option>
+    </optgroup>
+  </select>
+  <button id="play" class="primary" disabled>Play</button>
+  <span class="time" id="time">0.00 / 0.00 s</span>
+  <label><input id="loop" type="checkbox"> Loop</label>
+  <label>Slow-down <input id="speed" type="range" min="0" max="1000" value="0" style="width:170px"><span class="val" id="speedv">×1</span></label>
+  <label>Window <input id="win" type="range" min="5" max="90" value="30"><span class="val" id="winv" style="min-width:3.4em">30 ms</span></label>
+  <label><input id="mute" type="checkbox"> Audio off</label>
+  <span class="hint" id="audiohint"></span><span class="hint" id="loadhint"></span>
+  <span class="spacer"></span>
+  <button id="settingsBtn" aria-expanded="false" aria-controls="settings">Settings</button>
+  <button id="unroll">Unroll</button>
+  <button id="theme">Dark</button>
+</div>
+
+<div class="cw" id="cgwrap"><canvas id="cochleagram"></canvas></div>
+
+<div class="main" id="main">
+  <div class="cw" id="cochlea-wrap"><canvas id="cochlea" title="The view extends to 20 kHz; the model covers 20 Hz – 16 kHz."></canvas></div>
+  <div id="panels"></div>
+</div>
+
+<div class="settings" id="settings" hidden>
+  <label>Low-pass cutoff / pass <input id="cutoff" type="range" min="0" max="1000" value="0"><span class="val" id="cutoffv" style="min-width:4.6em">3000 Hz</span></label>
+  <label>Passes <input id="stages" type="range" min="1" max="8" value="3" style="width:70px"><span class="val" id="stagesv" style="min-width:1em">3</span></label>
+  <label>Compression c <input id="comp" type="range" min="10" max="100" value="30"><span class="val" id="compv" style="min-width:2.2em">0.30</span></label>
+  <label title="Normalises the RMS level of the loaded file to −6 dBFS for the analysis (playback is unchanged)"><input id="auto" type="checkbox" checked> Auto gain <span class="val" id="autov" style="min-width:5.5em"></span></label>
+  <label title="Extra level of the input signal before the filterbank, on top of auto gain">Input gain <input id="gain" type="range" min="-40" max="20" step="1" value="0"><span class="val" id="gainv" style="min-width:3.6em">0 dB</span></label>
+  <label><input id="adapt" type="checkbox"> Adaptation (EMA)</label>
+  <label>τ <input id="tau" type="range" min="0" max="1000" value="0"><span class="val" id="tauv" style="min-width:2.6em">10 s</span></label>
+  <span class="hint" id="f3db"></span>
+  <span class="spacer"></span>
+  <button id="reset">Reset settings</button>
+</div>
+
+<script>
+"use strict";
+// ---------------------------------------------------------------- constants
+const SR = 44100;
+const N_BANDS = 101, F_LOW = 20, F_HIGH = 20000;   // visualisation: 101 bands to 20 kHz (model: 96 bands to 16 kHz), same ERB spacing
+const RING = 4096;                                  // history per band (~93 ms)
+const ERB = f => 24.7 * (4.37 * f / 1000 + 1);
+const E = f => 21.4 * Math.log10(4.37 * f / 1000 + 1);
+const Einv = e => 1000 / 4.37 * (Math.pow(10, e / 21.4) - 1);
+const bandFreqs = (n, fl, fh) => Float64Array.from({ length: n }, (_, i) => Einv(E(fl) + i * (E(fh) - E(fl)) / (n - 1)));
+const FREQS = bandFreqs(N_BANDS, F_LOW, F_HIGH);
+const bandOfFreq = f => (E(f) - E(F_LOW)) / (E(F_HIGH) - E(F_LOW)) * (N_BANDS - 1);
+const hzText = f => f < 1000 ? f.toFixed(0) + " Hz" : (f / 1000).toFixed(2) + " kHz";
+
+// ---------------------------------------------------------------- filterbank
+// Gammatone t^3 e^(-2πbt) cos(2πft) as 4 cascaded complex one-pole filters plus the numerator
+// p z^-1 + 4p² z^-2 + p³ z^-3 (z-transform of n³ pⁿ): the same impulse response as a long FIR kernel, but cheap enough for real time.
+class Engine {
+  constructor(params, n = N_BANDS, fHigh = F_HIGH) {
+    this.params = params; this.n = n; this.freqs = bandFreqs(n, F_LOW, fHigh);
+    this.pr = new Float64Array(n); this.pi = new Float64Array(n);
+    this.q2r = new Float64Array(n); this.q2i = new Float64Array(n);
+    this.q3r = new Float64Array(n); this.q3i = new Float64Array(n);
+    this.invGain = new Float64Array(n);
+    for (let b = 0; b < n; b++) {
+      const f = this.freqs[b], bw = 1.019 * ERB(f);
+      const m = Math.exp(-2 * Math.PI * bw / SR), ph = 2 * Math.PI * f / SR;
+      const p = [m * Math.cos(ph), m * Math.sin(ph)];
+      this.pr[b] = p[0]; this.pi[b] = p[1];
+      const p2 = cmul(p, p), p3 = cmul(p2, p);
+      this.q2r[b] = 4 * p2[0]; this.q2i[b] = 4 * p2[1]; this.q3r[b] = p3[0]; this.q3i[b] = p3[1];
+      this.invGain[b] = 1 / bandGain(p, ph);
+    }
+    this.st = new Float64Array(n * 14);
+    this.lp = new Float64Array(n * 8);
+    this.hB = new Float32Array(n * RING);     // history: compressed membrane displacement (signed)
+    this.hH = new Float32Array(n * RING);     // history: hair-cell output (after low-pass)
+    this.curB = new Float64Array(n);
+    this.wp = 0;
+  }
+  reset() { this.st.fill(0); this.lp.fill(0); this.hB.fill(0); this.hH.fill(0); this.curB.fill(0); this.wp = 0; }
+  // dec: instead of the history, accumulate block means of the hair-cell output v and of v² (cochleagram, adaptation statistics)
+  process(x, n0, n, dec, b0 = 0, b1 = this.n) {
+    const c = this.params.compression, stages = this.params.stages, nb = this.n;
+    const a = Math.exp(-2 * Math.PI * this.params.cutoff / SR), oma = 1 - a, gain = this.params.gain === undefined ? 1 : this.params.gain;
+    const lp = this.lp, st = this.st, mask = RING - 1, wp = this.wp;
+    for (let b = b0; b < b1; b++) {
+      const pr = this.pr[b], pi = this.pi[b], q1r = pr, q1i = pi;
+      const q2r = this.q2r[b], q2i = this.q2i[b], q3r = this.q3r[b], q3i = this.q3i[b], ig = this.invGain[b];
+      const s0 = b * 14, l0 = b * 8, h0 = b * RING;
+      let w1r = st[s0], w1i = st[s0 + 1], w2r = st[s0 + 2], w2i = st[s0 + 3], w3r = st[s0 + 4], w3i = st[s0 + 5],
+          w4r = st[s0 + 6], w4i = st[s0 + 7], d1r = st[s0 + 8], d1i = st[s0 + 9], d2r = st[s0 + 10], d2i = st[s0 + 11],
+          d3r = st[s0 + 12], d3i = st[s0 + 13];
+      let comp = 0;
+      for (let i = 0; i < n; i++) {
+        const xv = x[n0 + i] * gain;
+        let t = pr * w1r - pi * w1i + xv; w1i = pr * w1i + pi * w1r; w1r = t;
+        t = pr * w2r - pi * w2i + w1r; w2i = pr * w2i + pi * w2r + w1i; w2r = t;
+        t = pr * w3r - pi * w3i + w2r; w3i = pr * w3i + pi * w3r + w2i; w3r = t;
+        t = pr * w4r - pi * w4i + w3r; w4i = pr * w4i + pi * w4r + w3i; w4r = t;
+        const y = q1r * d1r - q1i * d1i + q2r * d2r - q2i * d2i + q3r * d3r - q3i * d3i;
+        d3r = d2r; d3i = d2i; d2r = d1r; d2i = d1i; d1r = w4r; d1i = w4i;
+        const basil = y * ig;
+        comp = basil > 0 ? Math.pow(basil, c) : -Math.pow(-basil, c);   // compression on the membrane, sign kept
+        let v = comp > 0 ? comp : 0;                                  // half-wave rectification
+        for (let k = 0; k < stages; k++) { v = oma * v + a * lp[l0 + k]; lp[l0 + k] = v; }
+        if (dec) { const di = (((n0 + i) / dec.D) | 0) * dec.stride + b - dec.b0; dec.data[di] += v * dec.invD; dec.data2[di] += v * v * dec.invD; }
+        else { const idx = h0 + ((wp + i) & mask); this.hB[idx] = comp; this.hH[idx] = v; }
+      }
+      st[s0] = w1r; st[s0 + 1] = w1i; st[s0 + 2] = w2r; st[s0 + 3] = w2i; st[s0 + 4] = w3r; st[s0 + 5] = w3i;
+      st[s0 + 6] = w4r; st[s0 + 7] = w4i; st[s0 + 8] = d1r; st[s0 + 9] = d1i; st[s0 + 10] = d2r; st[s0 + 11] = d2i;
+      st[s0 + 12] = d3r; st[s0 + 13] = d3i;
+      this.curB[b] = comp;
+    }
+    if (!dec) this.wp = (wp + n) & mask;
+  }
+}
+function cmul(a, b) { return [a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0]]; }
+function cdiv(a, b) { const d = b[0] * b[0] + b[1] * b[1]; return [(a[0] * b[0] + a[1] * b[1]) / d, (a[1] * b[0] - a[0] * b[1]) / d]; }
+// gain of the real-part kernel at the band centre (normalises each band to gain 1)
+function bandGain(p, ph) {
+  const zi = [Math.cos(-ph), Math.sin(-ph)];
+  const H = pp => {
+    const u = cmul(pp, zi), u2 = cmul(u, u);
+    const num = cmul(u, [1 + 4 * u[0] + u2[0], 4 * u[1] + u2[1]]);
+    let den = [1 - u[0], -u[1]]; const d2 = cmul(den, den); den = cmul(d2, d2);
+    return cdiv(num, den);
+  };
+  const h1 = H(p), h2 = H([p[0], -p[1]]);
+  return Math.hypot((h1[0] + h2[0]) / 2, (h1[1] + h2[1]) / 2);
+}
+
+// ---------------------------------------------------------------- state
+const params = { cutoff: 3000, stages: 3, compression: 0.3, gain: 1 };
+const AUTO_TARGET_DB = -6;               // RMS level the loaded file is normalised to for the analysis
+let userGain = 1, autoGain = 1, autoOn = true;
+const engine = new Engine(params);
+let ctx = null, outGain = null, src = null;
+let mono = null, duration = 0;
+let playing = false, offset = 0, anchorT = 0, slow = 1, rate = 1;
+let procIdx = -1, needsRefresh = true, windowMs = 30;
+const adapt = { on: false, tau: 10 };
+const EMA_EPS = 1e-3;                     // variance floor of the adaptation, in hair-cell units
+const MIN_AUDIO_RATE = 1 / 16, WARM = 6000;
+const $ = id => document.getElementById(id);
+const nowS = () => performance.now() / 1000;
+
+function ensureCtx() {
+  if (ctx) return;
+  ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: SR });
+  outGain = ctx.createGain(); outGain.connect(ctx.destination);
+  outGain.gain.value = $("mute").checked ? 0 : 1;
+}
+function setBuffer(audioBuf, label) {
+  stopSource(); playing = false; offset = 0;
+  const ch = audioBuf.numberOfChannels, n = audioBuf.length;
+  mono = new Float32Array(n);
+  for (let c = 0; c < ch; c++) { const d = audioBuf.getChannelData(c); for (let i = 0; i < n; i++) mono[i] += d[i] / ch; }
+  duration = n / audioBuf.sampleRate; window._buf = audioBuf;
+  procIdx = -1; needsRefresh = true; cgDone = null;
+  let ss = 0; for (let i = 0; i < n; i++) ss += mono[i] * mono[i];
+  const rms = Math.sqrt(ss / n); autoGain = rms > 1e-6 ? Math.min(1000, Math.pow(10, AUTO_TARGET_DB / 20) / rms) : 1;
+  updateGain(false);
+  $("play").disabled = false; $("play").textContent = "Play";
+  document.title = "Cochlea – " + label;
+  startCochleagram();
+}
+function currentPos() { return playing ? Math.min(duration, offset + (nowS() - anchorT) * rate) : offset; }
+function stopSource() { if (src) { src.onended = null; try { src.stop(); } catch (e) {} src.disconnect(); src = null; } }
+function syncAudio() {                     // (re)start the audio source from the current position
+  stopSource();
+  $("audiohint").textContent = rate < MIN_AUDIO_RATE ? "(audio is silent below ×16 slow-down)" : "";
+  if (!playing || rate < MIN_AUDIO_RATE) return;
+  ensureCtx();
+  src = ctx.createBufferSource(); src.buffer = window._buf; src.playbackRate.value = rate; src.connect(outGain);
+  src.start(0, offset);
+}
+function play() {
+  if (!mono) return; ensureCtx(); ctx.resume();
+  if (offset >= duration - 0.01) offset = 0;
+  anchorT = nowS(); playing = true; syncAudio(); anchorT = nowS(); $("play").textContent = "Pause";
+}
+function pause() { offset = currentPos(); playing = false; stopSource(); $("play").textContent = "Play"; }
+function seekTo(t) {
+  t = Math.max(0, Math.min(duration, t));
+  const was = playing; offset = t; anchorT = nowS(); needsRefresh = true; procIdx = -1;
+  if (was) { syncAudio(); anchorT = nowS(); }
+}
+function endReached() {
+  if ($("loop").checked) seekTo(0);
+  else { stopSource(); playing = false; offset = duration; $("play").textContent = "Play"; }
+}
+function invalidate() { if (!playing) { procIdx = -1; needsRefresh = true; } }   // recompute the live view while paused
+
+function advance() {
+  if (!mono || (!playing && !needsRefresh)) return;
+  const target = Math.min(mono.length, Math.round(currentPos() * SR));
+  if (procIdx < 0 || target < procIdx || target - procIdx > SR * 0.3) { engine.reset(); procIdx = Math.max(0, target - WARM); }
+  const n = target - procIdx;
+  if (n > 0) { engine.process(mono, procIdx, n); procIdx = target; }
+  needsRefresh = false;
+}
+
+// ---------------------------------------------------------------- cochlea geometry
+const NF = 400;
+const spiralPhi = new Float64Array(NF);
+let totalLen = 1;
+(function buildSpiral() {
+  const M = 20000, Th = 2.75 * 2 * Math.PI, Rout = 1, Rin = 0.17;
+  const xs = new Float64Array(M), ys = new Float64Array(M), cum = new Float64Array(M);
+  for (let i = 0; i < M; i++) {
+    const al = Th * i / (M - 1), th = -Math.PI / 2 + al, r = Rout - (Rout - Rin) * al / Th;
+    xs[i] = r * Math.cos(th); ys[i] = r * Math.sin(th);
+    if (i) cum[i] = cum[i - 1] + Math.hypot(xs[i] - xs[i - 1], ys[i] - ys[i - 1]);
+  }
+  totalLen = cum[M - 1];
+  let k = 0, prev = 0;
+  for (let j = 0; j < NF; j++) {
+    const s = totalLen * j / (NF - 1);
+    while (k < M - 2 && cum[k + 1] < s) k++;
+    let phi = Math.atan2(ys[k + 1] - ys[k], xs[k + 1] - xs[k]);
+    while (phi < prev - Math.PI) phi += 2 * Math.PI;
+    while (phi > prev + Math.PI) phi -= 2 * Math.PI;
+    spiralPhi[j] = prev = phi;
+  }
+})();
+
+const PAD_X = 80, PAD_Y = 50;
+let SP_W = 2, SP_H = 2;                                  // bounding box of the rolled-up spiral
+(function () {
+  const ds = totalLen / (NF - 1); let x = 0, y = 0, x0 = 0, x1 = 0, y0 = 0, y1 = 0;
+  for (let j = 1; j < NF; j++) { const ph = 0.5 * (spiralPhi[j - 1] + spiralPhi[j]); x += ds * Math.cos(ph); y += ds * Math.sin(ph); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  SP_W = x1 - x0; SP_H = y1 - y0;
+})();
+const spiralScale = (w, h) => Math.min((w - 2 * PAD_X) / SP_W, (h - 2 * PAD_Y) / SP_H);
+let rollM = 0, rollFrom = 0, rollTo = 0, rollT0 = 0, rolling = false;
+const ROLL_MS = 3200;
+const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const geo = { x: new Float64Array(NF), y: new Float64Array(NF), nx: new Float64Array(NF), ny: new Float64Array(NF) };
+function buildGeometry(m, W, H) {
+  const px = new Float64Array(NF), py = new Float64Array(NF), ds = totalLen / (NF - 1);
+  for (let j = 1; j < NF; j++) {
+    const phi = (1 - m) * 0.5 * (spiralPhi[j - 1] + spiralPhi[j]);
+    px[j] = px[j - 1] + ds * Math.cos(phi); py[j] = py[j - 1] + ds * Math.sin(phi);
+  }
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  for (let j = 0; j < NF; j++) { x0 = Math.min(x0, px[j]); x1 = Math.max(x1, px[j]); y0 = Math.min(y0, py[j]); y1 = Math.max(y1, py[j]); }
+  const sc = Math.min((W - 2 * PAD_X) / Math.max(x1 - x0, 1e-3), (H - 2 * PAD_Y) / Math.max(y1 - y0, 1e-3));
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  // mirrored: the base (j = 0, high frequencies) ends up on the right, the apex (low frequencies) on the left
+  for (let j = 0; j < NF; j++) { geo.x[j] = W / 2 - (px[j] - cx) * sc; geo.y[j] = H / 2 - (py[j] - cy) * sc; }
+  for (let j = 0; j < NF; j++) {
+    const a = Math.max(0, j - 1), b = Math.min(NF - 1, j + 1);
+    const tx = geo.x[b] - geo.x[a], ty = geo.y[b] - geo.y[a], l = Math.hypot(tx, ty) || 1;
+    geo.nx[j] = -ty / l; geo.ny[j] = tx / l;          // flat: positive displacement points up
+  }
+}
+const bandOfFine = j => (1 - j / (NF - 1)) * (N_BANDS - 1);
+const fineOfBand = u => Math.round((1 - u / (N_BANDS - 1)) * (NF - 1));
+function catmull(arr, u) {
+  const n = arr.length, i = Math.max(0, Math.min(n - 2, Math.floor(u))), t = u - i;
+  const p0 = arr[Math.max(0, i - 1)], p1 = arr[i], p2 = arr[i + 1], p3 = arr[Math.min(n - 1, i + 2)];
+  return 0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t + (-p0 + 3 * p1 - 3 * p2 + p3) * t * t * t);
+}
+function fitCanvas(cv) {
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); return { g, w, h };
+}
+
+// ---------------------------------------------------------------- theme
+const THEMES = {
+  light: { ink: "#2a2824", muted: "#746e65", surface: "#fffdf8", paper: "#f4f0e8", grid: "rgba(42,40,36,.14)", tick: "rgba(42,40,36,.4)",
+           tubeEdge: "rgba(42,40,36,.28)", tube: "#ebe5db", fill: "rgba(197,165,107,.55)", dim: "#c9c2b5",
+           markers: ["#2a7fba", "#d1572b", "#2f9e6b"] },
+  dark:  { ink: "#e8e6e1", muted: "#98a0ab", surface: "#191e26", paper: "#12161c", grid: "rgba(232,230,225,.12)", tick: "rgba(232,230,225,.4)",
+           tubeEdge: "rgba(232,230,225,.2)", tube: "#232a34", fill: "rgba(197,165,107,.5)", dim: "#4a5360",
+           markers: ["#5bb8ee", "#f0865a", "#4fd08f"] },
+};
+let T = THEMES.light;
+function setTheme(name) {
+  T = THEMES[name]; document.documentElement.dataset.theme = name; $("theme").textContent = name === "dark" ? "Light" : "Dark";
+  markers.forEach((m, i) => { m.color = T.markers[i]; });
+  buildLut(name); if (typeof refreshCg === "function") refreshCg(true);
+  try { localStorage.setItem("cochlea-theme", name); } catch (e) {}
+}
+// spectrogram colours: classic dark map (black → purple → red → yellow) on dark, a pale paper-to-ink map on light
+const LUTS = {
+  dark: [[0, [0, 0, 4]], [0.13, [31, 12, 72]], [0.25, [85, 15, 109]], [0.38, [136, 34, 106]], [0.5, [186, 54, 85]],
+         [0.63, [227, 89, 51]], [0.75, [249, 140, 10]], [0.88, [249, 201, 50]], [1, [252, 255, 164]]],
+  light: [[0, [250, 247, 240]], [0.2, [236, 226, 205]], [0.4, [222, 192, 130]], [0.6, [201, 130, 70]], [0.8, [148, 60, 50]], [1, [48, 24, 40]]],
+};
+const lut = new Uint8ClampedArray(256 * 3);
+function buildLut(name) {
+  const st = LUTS[name];
+  for (let i = 0; i < 256; i++) {
+    const t = i / 255; let k = 0; while (k < st.length - 2 && t > st[k + 1][0]) k++;
+    const [t0, c0] = st[k], [t1, c1] = st[k + 1], u = (t - t0) / (t1 - t0);
+    for (let c = 0; c < 3; c++) lut[i * 3 + c] = c0[c] + (c1[c] - c0[c]) * u;
+  }
+}
+
+// ---------------------------------------------------------------- hair-cell windows
+const FONT = "11px Inter, system-ui, -apple-system, sans-serif";
+const markers = [
+  { u: Math.round(bandOfFreq(300)) }, { u: Math.round(bandOfFreq(1000)) }, { u: Math.round(bandOfFreq(4000)) },
+];
+markers.forEach((m, i) => {
+  const d = document.createElement("div"); d.className = "hc";
+  d.innerHTML = `<h3><span class="dot"></span>Window ${i + 1}<span class="fr" id="fr${i}"></span></h3><div class="cw"><canvas id="hc${i}"></canvas></div>`;
+  $("panels").appendChild(d); m.el = d; m.cv = d.querySelector("canvas"); m.dot = d.querySelector(".dot");
+});
+function drawPanel(m, i) {
+  const { g, w, h } = fitCanvas(m.cv), b = m.u;
+  g.clearRect(0, 0, w, h); m.dot.style.background = m.color;
+  const rows = 2, rh = h / rows, wn = Math.max(8, Math.round(windowMs / 1000 * SR));
+  const st = adapt.on && cgDone && cgDone.mu ? cgDone : null;               // adaptation statistics need the finished cochleagram
+  let mu = 0, sd = 1;
+  if (st) { const col = Math.max(0, Math.min(st.cols - 1, Math.floor(Math.max(procIdx, 0) / st.D))); mu = st.mu[col * N_BANDS + b]; sd = st.sd[col * N_BANDS + b]; }
+  const names = ["basilar membrane (compressed)", st ? "hair cell, adapted (z-score)" : adapt.on && mono ? "hair cell (adaptation pending…)" : "hair cell (rectified, low-passed)"];
+  g.font = FONT; g.textBaseline = "alphabetic";
+  const top = 16;                                  // the label strip of each row stays free of traces
+  for (let r = 0; r < rows; r++) {
+    g.strokeStyle = T.grid; g.lineWidth = 1;
+    if (r) { g.beginPath(); g.moveTo(0, r * rh + 0.5); g.lineTo(w, r * rh + 0.5); g.stroke(); }
+    g.fillStyle = T.muted; g.textAlign = "left"; g.fillText(names[r], 6, r * rh + 12);
+  }
+  g.beginPath(); g.moveTo(0, top + (rh - top) / 2); g.lineTo(w, top + (rh - top) / 2); g.stroke();
+  const hh2 = rh - top - 4;
+  if (st) { const y = rh + top + hh2 - (0 + 2) / 6 * hh2; g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }   // z = 0
+  const trace = (arr, row, color, lw, mode, fill) => {
+    const y0 = row * rh + top, hh = rh - top - 4;
+    g.beginPath();
+    for (let j = 0; j < wn; j++) {
+      let v = arr[b * RING + ((engine.wp - wn + j) & (RING - 1))];
+      const X = j / (wn - 1) * w; let Y;
+      if (mode === "signed") Y = y0 + hh / 2 - Math.max(-1.1, Math.min(1.1, v)) / 1.1 * hh / 2;
+      else if (mode === "rect") Y = y0 + hh - Math.max(0, Math.min(1.1, v)) / 1.1 * hh;
+      else Y = y0 + hh - (Math.max(-2, Math.min(4, (v - mu) / sd)) + 2) / 6 * hh;      // z-score, −2 … 4
+      if (j) g.lineTo(X, Y); else g.moveTo(X, Y);
+    }
+    if (fill) { g.lineTo(w, y0 + hh); g.lineTo(0, y0 + hh); g.closePath(); g.fillStyle = color + "33"; g.fill(); }
+    g.strokeStyle = color; g.lineWidth = lw; g.stroke();
+  };
+  trace(engine.hB, 0, T.ink, 1.2, "signed", false);
+  if (st) trace(engine.hH, 1, m.color, 2, "z", false);
+  else { trace(engine.hB, 1, T.dim, 1, "rect", false); trace(engine.hH, 1, m.color, 2, "rect", true); }
+  $("fr" + i).textContent = `band ${b + 1}/${N_BANDS} · ${hzText(FREQS[b])} · ${windowMs} ms`;
+}
+
+// ---------------------------------------------------------------- drawing the cochlea
+const dispFine = new Float64Array(NF), dispBand = new Float64Array(N_BANDS);
+const TICKS = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
+let labelRects = [];
+function label(g, text, x, y, align = "center") {
+  const w = g.measureText(text).width, x0 = align === "center" ? x - w / 2 : align === "right" ? x - w : x;
+  labelRects.push({ x0, x1: x0 + w, y0: y - 6, y1: y + 6, text });
+  g.textAlign = align; g.fillText(text, x, y);
+}
+function drawCochlea() {
+  const { g, w, h } = fitCanvas($("cochlea"));
+  buildGeometry(rollM, w, h);
+  const lerp = (a, b) => a + (b - a) * rollM;
+  // S = distance between neighbouring turns (rolled) or the vertical room per side (flat); everything scales with it
+  const S = lerp(0.302 * spiralScale(w, h), Math.min(120, h * 0.2)), tubeW = 0.62 * S, MAXPX = lerp(0.3, 0.42) * S;
+  g.clearRect(0, 0, w, h); labelRects = [];
+  const path = () => { g.beginPath(); g.moveTo(geo.x[0], geo.y[0]); for (let j = 1; j < NF; j++) g.lineTo(geo.x[j], geo.y[j]); };
+  g.lineCap = "round"; g.lineJoin = "round";
+  path(); g.strokeStyle = T.tubeEdge; g.lineWidth = tubeW + 2; g.stroke();
+  path(); g.strokeStyle = T.tube; g.lineWidth = tubeW; g.stroke();
+  path(); g.strokeStyle = T.tubeEdge; g.lineWidth = 1; g.stroke();
+  for (let b = 0; b < N_BANDS; b++) dispBand[b] = engine.curB[b];
+  for (let j = 0; j < NF; j++) dispFine[j] = Math.max(-1.1, Math.min(1.1, catmull(dispBand, bandOfFine(j)))) * MAXPX;
+  g.beginPath();
+  for (let j = 0; j < NF; j++) g.lineTo(geo.x[j] + geo.nx[j] * dispFine[j], geo.y[j] + geo.ny[j] * dispFine[j]);
+  for (let j = NF - 1; j >= 0; j--) g.lineTo(geo.x[j], geo.y[j]);
+  g.closePath(); g.fillStyle = T.fill; g.fill();
+  g.beginPath();
+  for (let j = 0; j < NF; j++) { const X = geo.x[j] + geo.nx[j] * dispFine[j], Y = geo.y[j] + geo.ny[j] * dispFine[j]; if (j) g.lineTo(X, Y); else g.moveTo(X, Y); }
+  g.strokeStyle = T.ink; g.lineWidth = 2; g.stroke();
+  // frequency labels in the gap on the outer side
+  g.font = FONT; g.textBaseline = "middle";
+  let lastLab = null;
+  for (const f of TICKS) {
+    const j = Math.max(0, Math.min(NF - 1, fineOfBand(bandOfFreq(f))));
+    const o1 = tubeW / 2 + 1, o2 = tubeW / 2 + 5, o3 = S / 2 + (rollM > 0.5 ? 6 : 0);
+    const lx = geo.x[j] - geo.nx[j] * o3, ly = geo.y[j] - geo.ny[j] * o3;
+    if (lastLab && Math.hypot(lx - lastLab[0], ly - lastLab[1]) < 26) continue;      // no crowded labels
+    if (markers.some(mm => mm.px !== undefined && Math.hypot(lx - mm.px, ly - mm.py) < 24)) continue;   // keep markers readable
+    lastLab = [lx, ly];
+    g.strokeStyle = T.tick; g.lineWidth = 1; g.beginPath();
+    g.moveTo(geo.x[j] - geo.nx[j] * o1, geo.y[j] - geo.ny[j] * o1); g.lineTo(geo.x[j] - geo.nx[j] * o2, geo.y[j] - geo.ny[j] * o2); g.stroke();
+    g.fillStyle = T.muted;
+    label(g, f >= 1000 ? (f / 1000) + "k" : String(f), geo.x[j] - geo.nx[j] * o3, geo.y[j] - geo.ny[j] * o3);
+  }
+  // markers in the gap on the inner side
+  const mr = Math.max(7, Math.min(10, S * 0.2));
+  markers.forEach((m, i) => {
+    const j = Math.max(0, Math.min(NF - 1, fineOfBand(m.u))), od = S / 2 + (rollM > 0.5 ? 6 : 0);
+    m.px = geo.x[j] + geo.nx[j] * od; m.py = geo.y[j] + geo.ny[j] * od;
+    g.strokeStyle = m.color; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(geo.x[j] - geo.nx[j] * tubeW / 2, geo.y[j] - geo.ny[j] * tubeW / 2); g.lineTo(m.px, m.py); g.stroke();
+    g.beginPath(); g.arc(m.px, m.py, mr, 0, 2 * Math.PI); g.fillStyle = m.color; g.fill();
+    g.fillStyle = T.surface; g.font = `bold ${Math.round(mr * 1.2)}px Inter, system-ui, sans-serif`; g.textAlign = "center"; g.fillText(String(i + 1), m.px, m.py + 0.5);
+    labelRects.push({ x0: m.px - mr, x1: m.px + mr, y0: m.py - mr, y1: m.py + mr, text: "marker " + (i + 1) });
+  });
+  g.textBaseline = "alphabetic"; g.font = "11px Inter, system-ui, sans-serif"; g.fillStyle = T.muted;
+  const capL = "← apex · low frequencies", capR = "base · high frequencies →", capB = "displacement after compression xᶜ";
+  g.textAlign = "left"; g.fillText(capL, 12, 20);
+  g.textAlign = "right"; g.fillText(capR, w - 12, 20);
+  g.textAlign = "left"; g.fillText(capB, 12, h - 10);
+  labelRects.push({ x0: 12, x1: 12 + g.measureText(capL).width, y0: 10, y1: 26, text: "caption L" },
+                  { x0: w - 12 - g.measureText(capR).width, x1: w - 12, y0: 10, y1: 26, text: "caption R" },
+                  { x0: 12, x1: 12 + g.measureText(capB).width, y0: h - 16, y1: h - 4, text: "caption B" });
+  g.textAlign = "left";
+  window.__overlaps = [];
+  for (let a = 0; a < labelRects.length; a++) for (let b = a + 1; b < labelRects.length; b++) {
+    const p = labelRects[a], q = labelRects[b];
+    if (p.x0 < q.x1 && q.x0 < p.x1 && p.y0 < q.y1 && q.y0 < p.y1) window.__overlaps.push(p.text + " × " + q.text);
+  }
+}
+
+// marker dragging
+let dragging = null;
+const cvCochlea = $("cochlea");
+const ptr = (cv, e) => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+cvCochlea.addEventListener("pointerdown", e => {
+  const [x, y] = ptr(cvCochlea, e); let best = null, bd = 18;
+  markers.forEach(m => { const d = Math.hypot(m.px - x, m.py - y); if (d < bd) { bd = d; best = m; } });
+  if (best) { dragging = best; cvCochlea.setPointerCapture(e.pointerId); }
+});
+cvCochlea.addEventListener("pointermove", e => {
+  const [x, y] = ptr(cvCochlea, e);
+  if (dragging) {
+    let bj = 0, bd = 1e18;
+    for (let j = 0; j < NF; j++) { const d = (geo.x[j] - x) ** 2 + (geo.y[j] - y) ** 2; if (d < bd) { bd = d; bj = j; } }
+    dragging.u = Math.max(0, Math.min(N_BANDS - 1, Math.round(bandOfFine(bj))));
+  } else cvCochlea.style.cursor = markers.some(m => Math.hypot(m.px - x, m.py - y) < 18) ? "grab" : "default";
+});
+const endDrag = () => { dragging = null; };
+cvCochlea.addEventListener("pointerup", endDrag); cvCochlea.addEventListener("pointercancel", endDrag);
+
+// ---------------------------------------------------------------- cochleagram (computed in web workers; also the seek bar)
+const CG_VMAX = 0.45;                                     // a full-scale band tone gives a mean of ≈0.41
+let cgJob = null, cgDone = null, cgTimer = null, cgStatus = "";
+const WORKER_SRC = `const SR=${SR},N_BANDS=${N_BANDS},F_LOW=${F_LOW},F_HIGH=${F_HIGH},RING=${RING};
+const ERB=${ERB},E=${E},Einv=${Einv},bandFreqs=${bandFreqs};
+${cmul}\n${cdiv}\n${bandGain}\n${Engine}
+onmessage = e => {
+  const { mono, params, D, b0, b1, cols } = e.data, nbw = b1 - b0, eng = new Engine(params);
+  const d1 = new Float32Array(cols * nbw), d2 = new Float32Array(cols * nbw), dec = { D, invD: 1 / D, data: d1, data2: d2, stride: nbw, b0 };
+  let next = 0, sent = 0, last = performance.now();
+  while (next < mono.length) {
+    const n = Math.min(D * 20, mono.length - next);
+    eng.process(mono, next, n, dec, b0, b1); next += n;
+    const done = next >= mono.length ? cols : Math.floor(next / D);
+    if (done > sent && (next >= mono.length || performance.now() - last > 200)) {
+      postMessage({ c0: sent, c1: done, b0, b1, next, d1: d1.slice(sent * nbw, done * nbw), d2: d2.slice(sent * nbw, done * nbw) });
+      sent = done; last = performance.now();
+    }
+  }
+};`;
+let workerURL = null;
+function stopWorkers() { if (cgJob && cgJob.workers) cgJob.workers.forEach(w => w.terminate()); }
+function startCochleagram() {
+  clearTimeout(cgTimer); stopWorkers(); cgJob = null; cgStatus = "";
+  if (!mono) return;
+  workerURL = workerURL || URL.createObjectURL(new Blob([WORKER_SRC], { type: "text/javascript" }));
+  const D = Math.max(441, Math.ceil(mono.length / 60000)), cols = Math.ceil(mono.length / D), nW = Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 2) - 1));
+  const job = { D, cols, len: mono.length, data: new Float32Array(cols * N_BANDS), data2: new Float32Array(cols * N_BANDS),
+                prog: new Array(nW).fill(0), img: document.createElement("canvas"), workers: [], dirty: false, lastDraw: 0, done: false, mu: null, sd: null };
+  job.img.width = cols; job.img.height = N_BANDS; cgJob = job;
+  for (let k = 0; k < nW; k++) {
+    const b0 = Math.round(k * N_BANDS / nW), b1 = Math.round((k + 1) * N_BANDS / nW), nbw = b1 - b0, w = new Worker(workerURL);
+    w.onmessage = e => {
+      if (cgJob !== job) return;
+      const m = e.data;
+      for (let c = m.c0; c < m.c1; c++) for (let q = 0; q < nbw; q++) {
+        job.data[c * N_BANDS + b0 + q] = m.d1[(c - m.c0) * nbw + q]; job.data2[c * N_BANDS + b0 + q] = m.d2[(c - m.c0) * nbw + q];
+      }
+      job.prog[k] = m.next; job.dirty = true;
+      if (job.prog.every(p => p >= job.len)) { job.done = true; computeStats(job); cgDone = job; job.dirty = true; cgStatus = ""; job.workers.forEach(x => x.terminate()); }
+      else cgStatus = `computing… ${Math.round(100 * Math.min(...job.prog) / job.len)} %`;
+    };
+    const copy = mono.slice(); w.postMessage({ mono: copy, params: { ...params }, D, b0, b1, cols }, [copy.buffer]);
+    job.workers.push(w);
+  }
+}
+function scheduleCochleagram() { clearTimeout(cgTimer); cgTimer = setTimeout(startCochleagram, 350); }
+// causal running mean / variance per band (leaky integrators, bias-corrected), evaluated per column
+function computeStats(j) {
+  const nb = N_BANDS, a = Math.exp(-j.D / (SR * adapt.tau)), m = new Float64Array(nb), q = new Float64Array(nb);
+  j.mu = new Float32Array(j.cols * nb); j.sd = new Float32Array(j.cols * nb);
+  let pw = 1;
+  for (let c = 0; c < j.cols; c++) {
+    pw *= a; const corr = 1 - pw;
+    for (let b = 0; b < nb; b++) {
+      const k = c * nb + b;
+      m[b] = a * m[b] + (1 - a) * j.data[k]; q[b] = a * q[b] + (1 - a) * j.data2[k];
+      const mc = m[b] / corr, qc = q[b] / corr;
+      j.mu[k] = mc; j.sd[k] = Math.sqrt(Math.max(0, qc - mc * mc) + EMA_EPS);
+    }
+  }
+}
+function renderCg(j, cols) {
+  const g = j.img.getContext("2d"), im = g.createImageData(j.cols, N_BANDS), ad = adapt.on && j.mu;
+  for (let c = 0; c < cols; c++) for (let b = 0; b < N_BANDS; b++) {
+    const k = c * N_BANDS + b, t = ad ? (j.data[k] - j.mu[k]) / j.sd[k] / 5 + 0.3 : j.data[k] / CG_VMAX;       // z from −1.5 to 3.5
+    const v = Math.max(0, Math.min(255, Math.round(t * 255))) * 3, o = ((N_BANDS - 1 - b) * j.cols + c) * 4;
+    im.data[o] = lut[v]; im.data[o + 1] = lut[v + 1]; im.data[o + 2] = lut[v + 2]; im.data[o + 3] = 255;
+  }
+  g.putImageData(im, 0, 0);
+}
+function refreshCg(force) {
+  const j = cgDone || cgJob; if (!j) return;
+  if (force || (j.dirty && performance.now() - j.lastDraw > 250)) {
+    renderCg(j, j.done ? j.cols : Math.min(j.cols, Math.floor(Math.min(...j.prog) / j.D)));
+    j.dirty = false; j.lastDraw = performance.now();
+  }
+}
+function drawCochleagram() {
+  const { g, w, h } = fitCanvas($("cochleagram"));
+  g.clearRect(0, 0, w, h);
+  const L = 58, R = 10, Tp = 8, B = 22, pw = w - L - R, ph = h - Tp - B;
+  g.fillStyle = `rgb(${lut[0]},${lut[1]},${lut[2]})`; g.fillRect(L, Tp, pw, ph);
+  const job = cgDone || cgJob;
+  if (job && mono) { g.imageSmoothingEnabled = true; g.drawImage(job.img, 0, 0, job.cols, N_BANDS, L, Tp, pw, ph); }
+  g.font = FONT; g.fillStyle = T.muted; g.textBaseline = "middle"; g.textAlign = "right";
+  let lastY = 1e9;
+  for (const f of TICKS) {                               // frequency axis; skip labels that would touch
+    const y = Tp + ph - (bandOfFreq(f) + 0.5) / N_BANDS * ph;
+    if (lastY - y < 14) continue;
+    lastY = y;
+    g.strokeStyle = T.tick; g.beginPath(); g.moveTo(L - 4, y); g.lineTo(L, y); g.stroke();
+    g.fillText(f >= 1000 ? (f / 1000) + " kHz" : f + " Hz", L - 7, y);
+  }
+  if (mono) {
+    const steps = [0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300], step = steps.find(s => duration / s <= 10) || 600;
+    g.textBaseline = "alphabetic"; g.textAlign = "center";
+    for (let t = 0; t <= duration + 1e-6; t += step) {
+      const x = L + t / duration * pw; g.strokeStyle = T.tick;
+      g.beginPath(); g.moveTo(x, Tp + ph); g.lineTo(x, Tp + ph + 4); g.stroke(); g.fillText(t + " s", x, Tp + ph + 16);
+    }
+    markers.forEach((m, i) => {
+      const y = Tp + ph - (m.u + 0.5) / N_BANDS * ph;
+      g.strokeStyle = T.markers[i]; g.globalAlpha = .9; g.lineWidth = 1; g.beginPath(); g.moveTo(L, y); g.lineTo(L + pw, y); g.stroke(); g.globalAlpha = 1;
+    });
+    const x = L + currentPos() / duration * pw;
+    g.strokeStyle = T.ink; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x, Tp); g.lineTo(x, Tp + ph); g.stroke();
+    if (cgStatus) { g.textAlign = "right"; g.textBaseline = "top"; g.fillStyle = T.ink; g.fillText(cgStatus, L + pw - 6, Tp + 5); }
+  } else { g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = T.muted; g.fillText("Load an audio file or pick an example. The cochleagram also works as the seek bar.", L + pw / 2, Tp + ph / 2); }
+  g.strokeStyle = T.tick; g.lineWidth = 1; g.strokeRect(L + .5, Tp + .5, pw - 1, ph - 1);
+  $("cochleagram")._geom = { L, pw };
+}
+let cgDrag = false;
+const cvCg = $("cochleagram");
+const cgSeek = e => { const g = cvCg._geom; if (!mono || !g) return; const [x] = ptr(cvCg, e); seekTo((x - g.L) / g.pw * duration); };
+cvCg.addEventListener("pointerdown", e => { cgDrag = true; cvCg.setPointerCapture(e.pointerId); cgSeek(e); });
+cvCg.addEventListener("pointermove", e => { if (cgDrag) cgSeek(e); });
+cvCg.addEventListener("pointerup", () => { cgDrag = false; });
+
+// ---------------------------------------------------------------- layout
+// Rolled: cochlea left, the three windows stacked on the right. Unrolled: the cochlea spans the full width, the windows sit below, side by side.
+const stackedMQ = matchMedia("(max-aspect-ratio: 1/1), (max-width: 900px)");
+function setRect(el, x, y, w, h) {
+  const k = `${Math.round(x)},${Math.round(y)},${Math.round(w)},${Math.round(h)}`;
+  if (el._k === k) return; el._k = k;
+  el.style.left = Math.round(x) + "px"; el.style.top = Math.round(y) + "px"; el.style.width = Math.round(w) + "px"; el.style.height = Math.round(h) + "px";
+}
+function layoutMain() {
+  const main = $("main"), wrap = $("cochlea-wrap"), hcs = markers.map(m => m.el), m = rollM, lerp = (a, b) => a + (b - a) * m;
+  if (stackedMQ.matches) {
+    wrap._k = null; hcs.forEach(h => { h._k = null; h.style.cssText = ""; });
+    const rolled = Math.min(innerWidth - 24, innerHeight * 0.6), flat = Math.max(150, Math.min(210, innerWidth * 0.3));
+    wrap.style.cssText = `height:${Math.round(lerp(rolled, flat))}px`;
+    return;
+  }
+  const W = main.clientWidth, H = main.clientHeight, g = 10, flatH = Math.round(H * 0.27);
+  setRect(wrap, 0, 0, lerp(W * 0.6 - g / 2, W), lerp(H, flatH));
+  const R = { x: W * 0.6 + g / 2, y: 0, w: W * 0.4 - g / 2, h: H }, F = { x: 0, y: flatH + g, w: W, h: H - flatH - g };
+  hcs.forEach((el, i) => {
+    const rh = (R.h - 2 * g) / 3, fw = (F.w - 2 * g) / 3;
+    setRect(el, lerp(R.x, F.x + i * (fw + g)), lerp(R.y + i * (rh + g), F.y), lerp(R.w, fw), lerp(rh, F.h));
+  });
+}
+
+// ---------------------------------------------------------------- main loop
+function frame(now) {
+  if (rolling) {
+    const t = Math.min(1, (now - rollT0) / ROLL_MS);
+    rollM = rollFrom + (rollTo - rollFrom) * ease(t);
+    if (t >= 1) { rolling = false; $("unroll").disabled = false; $("unroll").textContent = rollTo === 1 ? "Roll up" : "Unroll"; }
+  }
+  if (playing && currentPos() >= duration - 1e-3) endReached();
+  layoutMain();
+  advance();
+  refreshCg(false);
+  drawCochlea(); markers.forEach(drawPanel); drawCochleagram();
+  if (mono) {
+    $("time").textContent = currentPos().toFixed(2) + " / " + duration.toFixed(2) + " s";
+  }
+  requestAnimationFrame(frame);
+}
+
+// ---------------------------------------------------------------- controls
+$("file").addEventListener("change", async e => {
+  const f = e.target.files[0]; if (!f) return;
+  ensureCtx();
+  $("example").selectedIndex = 0;
+  try { setBuffer(await ctx.decodeAudioData(await f.arrayBuffer()), f.name); }
+  catch (err) { alert("Could not decode the file: " + err.message); }
+});
+function makeTone() {
+  const dur = 12, n = dur * SR, buf = new AudioBuffer({ length: n, sampleRate: SR, numberOfChannels: 1 }), d = buf.getChannelData(0);
+  // 0–4 s exponential sweep 50 Hz → 12 kHz; 4–7 s 220 Hz with 10 harmonics; 7–12 s plucked C major chord
+  let ph = 0;
+  for (let i = 0; i < 4 * SR; i++) { const f = 50 * Math.pow(240, i / (4 * SR)); ph += 2 * Math.PI * f / SR; d[i] = 0.35 * Math.sin(ph); }
+  for (let i = 4 * SR; i < 7 * SR; i++) {
+    const t = i / SR; let s = 0; for (let k = 1; k <= 10; k++) s += Math.sin(2 * Math.PI * 220 * k * t) / k;
+    d[i] = 0.18 * s * Math.min(1, (i - 4 * SR) / 2000) * Math.min(1, (7 * SR - i) / 2000);
+  }
+  [[261.63, 7.0], [329.63, 7.5], [392.0, 8.0]].forEach(([f, t0]) => {
+    for (let i = Math.round(t0 * SR); i < n; i++) {
+      const t = i / SR - t0; let s = 0;
+      for (let k = 1; k <= 6; k++) s += Math.sin(2 * Math.PI * f * k * t) / (k * k) * Math.exp(-t * (0.8 + 0.5 * k));
+      d[i] += 0.3 * s;
+    }
+  });
+  return buf;
+}
+const MEDIA_BASES = ["https://leonbartosch.com/media/", "https://raw.githubusercontent.com/LeonBartosch/LeonBartosch.github.io/main/media/"];
+async function fetchExample(file) {
+  let last = null;
+  for (const base of MEDIA_BASES) {
+    try { const r = await fetch(base + encodeURIComponent(file)); if (r.ok) return await r.arrayBuffer(); last = new Error("HTTP " + r.status); }
+    catch (e) { last = e; }
+  }
+  throw last;
+}
+$("example").addEventListener("change", async e => {
+  const v = e.target.value, name = e.target.selectedOptions[0].textContent;
+  try {
+    if (v === "tone") setBuffer(makeTone(), name);
+    else { $("loadhint").textContent = "loading " + name + "…"; ensureCtx(); const buf = await ctx.decodeAudioData(await fetchExample(v)); setBuffer(buf, name); }
+    $("loadhint").textContent = "";
+  } catch (err) { $("loadhint").textContent = "could not load " + name + " (" + err.message + ")"; }
+});
+$("play").addEventListener("click", () => playing ? pause() : play());
+$("mute").addEventListener("change", e => { if (outGain) outGain.gain.value = e.target.checked ? 0 : 1; });
+$("speed").addEventListener("input", e => {
+  if (playing) { offset = currentPos(); anchorT = nowS(); }
+  slow = Math.pow(10, 3 * e.target.value / 1000);               // ×1 … ×1000 slower
+  const wasAudible = rate >= MIN_AUDIO_RATE; rate = 1 / slow;
+  $("speedv").textContent = "×" + (slow < 10 ? slow.toFixed(1) : Math.round(slow));
+  if (src && rate >= MIN_AUDIO_RATE) src.playbackRate.value = rate;
+  else if (wasAudible !== (rate >= MIN_AUDIO_RATE)) { syncAudio(); anchorT = nowS(); }
+  $("audiohint").textContent = rate < MIN_AUDIO_RATE ? "(audio is silent below ×16 slow-down)" : "";
+});
+$("unroll").addEventListener("click", () => {
+  rollFrom = rollM; rollTo = rollM < 0.5 ? 1 : 0; rollT0 = performance.now(); rolling = true; $("unroll").disabled = true;
+});
+const dbText = db => (db > 0 ? "+" : "") + db + " dB";
+function updateGain(rerun = true) {                  // total analysis gain = auto gain (optional) × manual input gain
+  params.gain = (autoOn ? autoGain : 1) * userGain;
+  $("autov").textContent = autoOn && mono ? dbText(Math.round(20 * Math.log10(autoGain) * 10) / 10) : "";
+  if (rerun) { invalidate(); scheduleCochleagram(); }
+}
+$("gain").addEventListener("input", e => { const db = +e.target.value; userGain = Math.pow(10, db / 20); $("gainv").textContent = dbText(db); updateGain(); });
+$("auto").addEventListener("change", e => { autoOn = e.target.checked; updateGain(); });
+function updateF3() {
+  const f3 = params.cutoff * Math.sqrt(Math.pow(2, 1 / params.stages) - 1);
+  $("f3db").textContent = `combined −3 dB point ≈ ${hzText(f3)}`;
+}
+const cutoffFromSlider = v => Math.round(200 * Math.pow(40, v / 1000));      // 200 Hz … 8 kHz, logarithmic
+$("cutoff").value = Math.round(1000 * Math.log(3000 / 200) / Math.log(40));
+$("cutoff").addEventListener("input", e => { params.cutoff = cutoffFromSlider(+e.target.value); $("cutoffv").textContent = params.cutoff + " Hz"; updateF3(); invalidate(); scheduleCochleagram(); });
+$("stages").addEventListener("input", e => { params.stages = +e.target.value; $("stagesv").textContent = params.stages; updateF3(); invalidate(); scheduleCochleagram(); });
+$("comp").addEventListener("input", e => { params.compression = e.target.value / 100; $("compv").textContent = params.compression.toFixed(2); invalidate(); scheduleCochleagram(); });
+$("win").addEventListener("input", e => { windowMs = +e.target.value; $("winv").textContent = windowMs + " ms"; });
+const tauFromSlider = v => Math.round(0.5 * Math.pow(60, v / 1000) * 10) / 10;                // 0.5 … 30 s, logarithmic
+const TAU_DEFAULT_SLIDER = Math.round(1000 * Math.log(10 / 0.5) / Math.log(60));
+$("tau").value = TAU_DEFAULT_SLIDER;
+$("adapt").addEventListener("change", e => { adapt.on = e.target.checked; refreshCg(true); });
+$("tau").addEventListener("input", e => {
+  adapt.tau = tauFromSlider(+e.target.value); $("tauv").textContent = adapt.tau + " s";
+  if (cgDone) { computeStats(cgDone); refreshCg(true); }
+});
+const DEFAULTS = { cutoff: 3000, stages: 3, comp: 30, gain: 0, win: 30 };
+$("reset").addEventListener("click", () => {
+  const set = (id, v) => { $(id).value = v; $(id).dispatchEvent(new Event("input")); };
+  set("cutoff", Math.round(1000 * Math.log(DEFAULTS.cutoff / 200) / Math.log(40))); set("stages", DEFAULTS.stages); set("comp", DEFAULTS.comp);
+  set("gain", DEFAULTS.gain); set("win", DEFAULTS.win);
+  params.cutoff = DEFAULTS.cutoff; $("cutoffv").textContent = params.cutoff + " Hz"; updateF3();       // the slider is rounded, the value is exact
+  $("auto").checked = true; autoOn = true; updateGain();
+  $("adapt").checked = false; adapt.on = false; set("tau", TAU_DEFAULT_SLIDER);
+});
+$("cutoffv").textContent = "3000 Hz"; updateF3();
+
+// self-test: 10 kHz sine through a 96-band / 16 kHz filterbank; mean hair-cell output for amplitudes 1, 0.01, 0 (expected ≈ 0.4084 / 0.1026 / 0)
+window.cochleaSelfTest = function () {
+  const out = [];
+  for (const amp of [1, 0.01, 0]) {
+    const e = new Engine({ cutoff: 3000, stages: 3, compression: 0.3 }, 96, 16000), n = Math.round(0.5 * SR), x = new Float32Array(n);
+    for (let i = 0; i < n; i++) x[i] = amp * Math.sin(2 * Math.PI * 10000 * i / SR);
+    e.process(x, 0, n);
+    let bi = 0, bd = 1e9; for (let b = 0; b < 96; b++) { const d = Math.abs(e.freqs[b] - 10000); if (d < bd) { bd = d; bi = b; } }
+    let s = 0; for (let j = 0; j < RING; j++) s += e.hH[bi * RING + j];
+    out.push(s / RING);
+  }
+  return out;
+};
+$("settingsBtn").addEventListener("click", () => {
+  const box = $("settings"), open = box.hidden;
+  box.hidden = !open; $("settingsBtn").setAttribute("aria-expanded", String(open));
+  $("settingsBtn").style.borderColor = open ? "var(--gold)" : "";
+});
+$("theme").addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
+let saved = null; try { saved = localStorage.getItem("cochlea-theme"); } catch (e) {}
+setTheme(saved === "dark" ? "dark" : "light");              // first visit: light; afterwards the last choice
+$("example").value = "tone"; setBuffer(makeTone(), "Test tone");                 // default audio
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
