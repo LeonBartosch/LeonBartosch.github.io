@@ -462,7 +462,8 @@ function drawCochlea() {
   buildGeometry(rollM, w, h);
   const lerp = (a, b) => a + (b - a) * rollM;
   // S = distance between neighbouring turns (rolled) or the vertical room per side (flat); everything scales with it
-  const S = lerp(0.302 * spiralScale(w, h), Math.min(120, h * 0.2)), tubeW = 0.62 * S, MAXPX = lerp(0.3, 0.42) * S;
+  const S = lerp(0.302 * spiralScale(w, h), Math.min(120, h * 0.24)), tubeW = lerp(0.62, 1.0) * S, MAXPX = lerp(0.3, 0.4) * S;
+  const gapO = (spiralOff, flatOff) => lerp(spiralOff, flatOff);          // offsets outside the tube: gap centre when rolled, clear of the thicker tube when flat
   g.clearRect(0, 0, w, h); labelRects = [];
   const path = () => { g.beginPath(); g.moveTo(geo.x[0], geo.y[0]); for (let j = 1; j < NF; j++) g.lineTo(geo.x[j], geo.y[j]); };
   g.lineCap = "round"; g.lineJoin = "round";
@@ -483,7 +484,7 @@ function drawCochlea() {
   let lastLab = null;
   for (const f of TICKS) {
     const j = Math.max(0, Math.min(NF - 1, fineOfBand(bandOfFreq(f))));
-    const o1 = tubeW / 2 + 1, o2 = tubeW / 2 + 5, o3 = S / 2 + (rollM > 0.5 ? 6 : 0);
+    const o1 = tubeW / 2 + 1, o2 = tubeW / 2 + 5, o3 = gapO(S / 2, tubeW / 2 + 14);
     const lx = geo.x[j] - geo.nx[j] * o3, ly = geo.y[j] - geo.ny[j] * o3;
     if (lastLab && Math.hypot(lx - lastLab[0], ly - lastLab[1]) < 26) continue;      // no crowded labels
     if (markers.some(mm => mm.px !== undefined && Math.hypot(lx - mm.px, ly - mm.py) < 24)) continue;   // keep markers readable
@@ -496,7 +497,7 @@ function drawCochlea() {
   // markers in the gap on the inner side
   const mr = Math.max(7, Math.min(10, S * 0.2));
   markers.forEach((m, i) => {
-    const j = Math.max(0, Math.min(NF - 1, fineOfBand(m.u))), od = S / 2 + (rollM > 0.5 ? 6 : 0);
+    const j = Math.max(0, Math.min(NF - 1, fineOfBand(m.u))), od = gapO(S / 2, tubeW / 2 + 16);
     m.px = geo.x[j] + geo.nx[j] * od; m.py = geo.y[j] + geo.ny[j] * od;
     g.strokeStyle = m.color; g.lineWidth = 2;
     g.beginPath(); g.moveTo(geo.x[j] - geo.nx[j] * tubeW / 2, geo.y[j] - geo.ny[j] * tubeW / 2); g.lineTo(m.px, m.py); g.stroke();
@@ -506,12 +507,32 @@ function drawCochlea() {
   });
   g.textBaseline = "alphabetic"; g.font = "11px Inter, system-ui, sans-serif"; g.fillStyle = T.muted;
   const capL = "← apex · low frequencies", capR = "base · high frequencies →", capB = "displacement after compression xᶜ";
-  g.textAlign = "left"; g.fillText(capL, 12, 20);
-  g.textAlign = "right"; g.fillText(capR, w - 12, 20);
   g.textAlign = "left"; g.fillText(capB, 12, h - 10);
-  labelRects.push({ x0: 12, x1: 12 + g.measureText(capL).width, y0: 10, y1: 26, text: "caption L" },
-                  { x0: w - 12 - g.measureText(capR).width, x1: w - 12, y0: 10, y1: 26, text: "caption R" },
-                  { x0: 12, x1: 12 + g.measureText(capB).width, y0: h - 16, y1: h - 4, text: "caption B" });
+  labelRects.push({ x0: 12, x1: 12 + g.measureText(capB).width, y0: h - 16, y1: h - 4, text: "caption B" });
+  // Axis captions: in the corners when unrolled, at the two ends of the membrane when rolled up
+  const aFlat = Math.max(0, (rollM - 0.5) * 2), aRolled = Math.max(0, 1 - rollM * 2);
+  if (aFlat > 0) {
+    g.globalAlpha = aFlat;
+    g.textAlign = "left"; g.fillText(capL, 12, 20); g.textAlign = "right"; g.fillText(capR, w - 12, 20); g.globalAlpha = 1;
+    if (aFlat > 0.5) labelRects.push({ x0: 12, x1: 12 + g.measureText(capL).width, y0: 10, y1: 26, text: "caption L" },
+                                     { x0: w - 12 - g.measureText(capR).width, x1: w - 12, y0: 10, y1: 26, text: "caption R" });
+  }
+  if (aRolled > 0) {
+    const endLabel = (text, j) => {                       // at the free end of the membrane, in the direction with the most clearance
+      const d = tubeW / 2 + 24; let best = null, bs = -1;
+      for (let k = 0; k < 16; k++) {
+        const ang = k * Math.PI / 8, x = geo.x[j] + Math.cos(ang) * d, y = geo.y[j] + Math.sin(ang) * d;
+        let sc = 1e9;
+        for (let q = 0; q < NF; q += 4) sc = Math.min(sc, Math.hypot(geo.x[q] - x, geo.y[q] - y) - (Math.abs(q - j) < 8 ? d - 4 : 0));
+        labelRects.forEach(r => { sc = Math.min(sc, Math.hypot((r.x0 + r.x1) / 2 - x, (r.y0 + r.y1) / 2 - y) - (r.x1 - r.x0) / 2 - 14); });   // tick labels and markers
+        if (sc > bs) { bs = sc; best = [x, y]; }
+      }
+      const [x, y] = best;
+      g.globalAlpha = aRolled; g.textAlign = "center"; g.fillText(text, x, y); g.globalAlpha = 1;
+      if (aRolled > 0.5) { const wd = g.measureText(text).width; labelRects.push({ x0: x - wd / 2, x1: x + wd / 2, y0: y - 6, y1: y + 6, text }); }
+    };
+    g.textBaseline = "middle"; endLabel("base", 0); endLabel("apex", NF - 1); g.textBaseline = "alphabetic";
+  }
   g.textAlign = "left";
   window.__overlaps = [];
   for (let a = 0; a < labelRects.length; a++) for (let b = a + 1; b < labelRects.length; b++) {
