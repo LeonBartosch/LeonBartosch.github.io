@@ -524,12 +524,8 @@ function drawCochlea() {
     let a = 0, b = 2, tx = geo.x[a] - geo.x[b], ty = geo.y[a] - geo.y[b], l = Math.hypot(tx, ty) || 1;
     const bd = tubeW / 2 + 22, bx = geo.x[0] + tx / l * bd, by = geo.y[0] + ty / l * bd;
     g.fillText("base", bx, by);
-    // apex: in the middle of the innermost turn, joined to the membrane tip by a thin line
-    let cx = 0, cy = 0, n = 0; for (let q = Math.floor(NF * 0.64); q < NF; q++) { cx += geo.x[q]; cy += geo.y[q]; n++; }
-    cx /= n; cy /= n;
-    const ex = geo.x[NF - 1], ey = geo.y[NF - 1], dl = Math.hypot(ex - cx, ey - cy) || 1, tw = g.measureText("apex").width / 2 + 6;
-    g.strokeStyle = T.tick; g.lineWidth = 1; g.beginPath();
-    g.moveTo(cx + (ex - cx) / dl * tw, cy + (ey - cy) / dl * tw); g.lineTo(ex, ey); g.stroke();
+    // apex: centred in the middle of the roll
+    const cx = w / 2, cy = h / 2;
     g.fillText("apex", cx, cy);
     g.globalAlpha = 1;
     labelRects.push({ x0: bx - 14, x1: bx + 14, y0: by - 6, y1: by + 6, text: "base" }, { x0: cx - 14, x1: cx + 14, y0: cy - 6, y1: cy + 6, text: "apex" });
@@ -711,7 +707,7 @@ function frame(now) {
   if (rolling) {
     const t = Math.min(1, (now - rollT0) / ROLL_MS);
     rollM = rollFrom + (rollTo - rollFrom) * ease(t);
-    if (t >= 1) { rolling = false; $("unroll").disabled = false; $("unroll").textContent = rollTo === 1 ? "Roll" : "Unroll"; }
+    if (t >= 1) { rolling = false; $("unroll").disabled = false; $("unroll").textContent = rollTo === 1 ? "Roll up" : "Unroll"; }
   }
   if (playing && currentPos() >= duration - 1e-3) endReached();
   capAlpha += ((rolling ? 0 : 1) - capAlpha) * 0.2;
