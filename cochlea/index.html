@@ -468,8 +468,14 @@ function drawCochlea() {
   g.clearRect(0, 0, w, h); labelRects = [];
   const path = () => { g.beginPath(); g.moveTo(geo.x[0], geo.y[0]); for (let j = 1; j < NF; j++) g.lineTo(geo.x[j], geo.y[j]); };
   g.lineCap = "round"; g.lineJoin = "round";
-  path(); g.strokeStyle = T.tubeEdge; g.lineWidth = tubeW + 2; g.stroke();
-  path(); g.strokeStyle = T.tube; g.lineWidth = tubeW; g.stroke();
+  // tube body as a filled outline (offset curves + round caps); very wide round-join strokes render with artefacts in Safari
+  const hw = tubeW / 2, aS = Math.atan2(geo.ny[0], geo.nx[0]), aE = Math.atan2(geo.ny[NF - 1], geo.nx[NF - 1]);
+  g.beginPath();
+  for (let j = 0; j < NF; j++) g.lineTo(geo.x[j] + geo.nx[j] * hw, geo.y[j] + geo.ny[j] * hw);
+  g.arc(geo.x[NF - 1], geo.y[NF - 1], hw, aE, aE - Math.PI, true);
+  for (let j = NF - 1; j >= 0; j--) g.lineTo(geo.x[j] - geo.nx[j] * hw, geo.y[j] - geo.ny[j] * hw);
+  g.arc(geo.x[0], geo.y[0], hw, aS + Math.PI, aS, true);
+  g.closePath(); g.fillStyle = T.tube; g.fill(); g.strokeStyle = T.tubeEdge; g.lineWidth = 1.5; g.stroke();
   path(); g.strokeStyle = T.tubeEdge; g.lineWidth = 1; g.stroke();
   for (let b = 0; b < N_BANDS; b++) dispBand[b] = engine.curB[b];
   for (let j = 0; j < NF; j++) dispFine[j] = Math.max(-1.1, Math.min(1.1, catmull(dispBand, bandOfFine(j)))) * MAXPX;
