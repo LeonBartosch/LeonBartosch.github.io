@@ -524,8 +524,10 @@ function drawCochlea() {
     let a = 0, b = 2, tx = geo.x[a] - geo.x[b], ty = geo.y[a] - geo.y[b], l = Math.hypot(tx, ty) || 1;
     const bd = tubeW / 2 + 22, bx = geo.x[0] + tx / l * bd, by = geo.y[0] + ty / l * bd;
     g.fillText("base", bx, by);
-    // apex: centred in the middle of the roll
-    const cx = w / 2, cy = h / 2;
+    // apex: centred in the middle of the roll, joined to the membrane tip by a thin line
+    const cx = w / 2, cy = h / 2, ex = geo.x[NF - 1], ey = geo.y[NF - 1], dl = Math.hypot(ex - cx, ey - cy) || 1, tw = g.measureText("apex").width / 2 + 6;
+    g.strokeStyle = T.tick; g.lineWidth = 1; g.beginPath();                    // thin line from the label to the membrane tip
+    g.moveTo(cx + (ex - cx) / dl * tw, cy + (ey - cy) / dl * tw); g.lineTo(ex, ey); g.stroke();
     g.fillText("apex", cx, cy);
     g.globalAlpha = 1;
     labelRects.push({ x0: bx - 14, x1: bx + 14, y0: by - 6, y1: by + 6, text: "base" }, { x0: cx - 14, x1: cx + 14, y0: cy - 6, y1: cy + 6, text: "apex" });
